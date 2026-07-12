@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, BaseModel
@@ -30,7 +30,7 @@ class User(Base, BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
-    projects: Mapped[list["Project"]] = relationship(
+    projects: Mapped[List["Project"]] = relationship(
         "Project",
         back_populates="owner",
         cascade="all, delete-orphan"
