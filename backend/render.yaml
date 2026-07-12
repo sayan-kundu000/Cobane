@@ -21,8 +21,10 @@ services:
         value: openai
       - key: AI_MODEL
         value: gpt-4o
+      - key: AI_API_KEY
+        value: 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
       - key: AI_PROVIDER_API_KEY
-        sync: false # User supplies this in Render dashboard
+        value: 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
       - key: ALLOWED_ORIGINS
         value: "*" # Recommended to restrict in production
       - key: UPLOAD_DIR
