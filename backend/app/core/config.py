@@ -31,6 +31,13 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def parse_database_url(cls, v) -> str:
+        if isinstance(v, str) and v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     @field_validator("ALLOWED_CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v) -> List[str]:
