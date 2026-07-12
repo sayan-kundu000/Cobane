@@ -10,7 +10,7 @@ class AIConfig:
         self.base_url: str = os.getenv("AI_BASE_URL", settings.AI_BASE_URL)
         
         # Dedicated model parameters with robust defaults
-        self.model_name: str = os.getenv("AI_MODEL_NAME", "gpt-4o")
+        self.model_name: str = os.getenv("AI_MODEL_NAME", os.getenv("AI_MODEL", "gpt-4o"))
         self.temperature: float = float(os.getenv("AI_TEMPERATURE", "0.2"))
         self.max_tokens: int = int(os.getenv("AI_MAX_TOKENS", "2048"))
         self.timeout_seconds: float = float(os.getenv("AI_TIMEOUT_SECONDS", "30.0"))

@@ -9,6 +9,8 @@ services:
     envVars:
       - key: PORT
         value: "8000"
+      - key: ENVIRONMENT
+        value: production
       - key: DATABASE_URL
         fromDatabase:
           name: cobane-db
@@ -21,11 +23,13 @@ services:
         value: openai
       - key: AI_MODEL
         value: gpt-4o
+      - key: AI_MODEL_NAME
+        value: gpt-4o
       - key: AI_API_KEY
         value: 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
       - key: AI_PROVIDER_API_KEY
         value: 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
-      - key: ALLOWED_ORIGINS
+      - key: ALLOWED_CORS_ORIGINS
         value: "*"
       - key: UPLOAD_DIR
         value: "uploads"
@@ -33,6 +37,21 @@ services:
         value: "reports"
       - key: LOG_LEVEL
         value: "info"
+
+  # Static site instance serving our React/Vite frontend
+  - type: static
+    name: cobane-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        value: https://cobane-backend.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
 
 # PostgreSQL database cluster instance managed by Render
 databases:
