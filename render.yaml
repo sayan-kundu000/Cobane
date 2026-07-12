@@ -7,7 +7,6 @@ services:
     dockerContext: backend
     plan: free
     healthCheckPath: /api/v1/health
-    preDeployCommand: alembic upgrade head
     envVars:
       - key: PORT
         value: "8000"
