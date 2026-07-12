@@ -1,7 +1,10 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, BaseModel
+
+if TYPE_CHECKING:
+    from app.models.project import Project
 
 class User(Base, BaseModel):
     """Database model mapping general accounts credentials."""

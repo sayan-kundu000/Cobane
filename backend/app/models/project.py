@@ -1,7 +1,11 @@
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, BaseModel
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.review import Review
 
 class Project(Base, BaseModel):
     """Database model representing reviewable target workspaces."""

@@ -1,7 +1,10 @@
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, Integer, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, BaseModel
+
+if TYPE_CHECKING:
+    from app.models.project import Project, UploadedSource
 
 class Review(Base, BaseModel):
     """Database model mapping complete AI and static code runs."""
