@@ -2,10 +2,12 @@ services:
   # Web service instance running our FastAPI backend container
   - type: web
     name: cobane-backend
-    env: docker
+    runtime: docker
     dockerfilePath: backend/Dockerfile.prod
     dockerContext: backend
     plan: free
+    healthCheckPath: /api/v1/health
+    startCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"
     envVars:
       - key: PORT
         value: "8000"
