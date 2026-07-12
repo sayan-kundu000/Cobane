@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from typing import List, Optional
 from app.core.dependencies import get_db, get_current_user
 from app.core.responses import StandardJSONResponse
@@ -108,7 +109,6 @@ async def delete_review(
             raise NotFoundException(f"Review with ID {review_id} not found.")
         # retrieve project owner
         from app.models.project import Project
-        from sqlalchemy.future import select
         res = await db.execute(select(Project).filter(Project.id == review.project_id))
         proj = res.scalars().first()
         owner_scope = proj.owner_id if proj else 0
