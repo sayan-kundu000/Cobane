@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: cobane-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cobane
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cobane-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cobane-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/cobane
+      - JWT_SECRET_KEY=devsecretkeychangeinproductionatleast32chars
+      - AI_PROVIDER=openai
+      - AI_API_KEY=mock-api-key
+      - ENVIRONMENT=development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - cobane-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cobane-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - cobane-network
+
+volumes:
+  postgres_data:
+
+networks:
+  cobane-network:
+    driver: bridge

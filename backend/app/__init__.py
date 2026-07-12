@@ -1,0 +1,1 @@
+# Cobane application package initialization

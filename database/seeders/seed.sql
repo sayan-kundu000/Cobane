@@ -1,0 +1,2 @@
+-- Database seed data placeholders
+-- Will be populated in Chapter 04 / 05.

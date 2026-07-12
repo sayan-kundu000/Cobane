@@ -1,0 +1,42 @@
+# Ignore version control systems
+.git
+.github
+.gitignore
+
+# Ignore Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+ENV/
+env/
+
+# Ignore databases and state files
+*.db
+*.sqlite3
+test.db
+dev.db
+
+# Ignore diagnostic logging files and build outputs
+logs/
+*.log
+
+# Ignore user uploads and reports
+uploads/
+reports/
+
+# Ignore other configs
+Dockerfile
+Dockerfile.prod
+docker-compose.yml
+render.yaml
+.env
+.env.example
+.env.local
+.env.*.local

@@ -1,0 +1,31 @@
+[tool.pylint.messages_control]
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "too-few-public-methods",
+    "duplicate-code",
+    "unsubscriptable-object",
+    "line-too-long"
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.black]
+line-length = 120
+target-version = ['py313']
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"] # Allow assert statements in tests/validation
+
+[tool.radon]
+exclude = "tests/*,migrations/*"
+cc_min = "B"
+mi_min = "B"
