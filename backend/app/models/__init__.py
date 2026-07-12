@@ -14,5 +14,5 @@ __all__ = [
     "Review",
     "ReviewFinding",
     "ReviewMetrics",
-    "Report"
+    "Report",
 ]

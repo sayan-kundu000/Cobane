@@ -2,11 +2,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 from typing import List
 
+
 class Settings(BaseSettings):
     """Cobane System Configuration.
 
     Environment variables are automatically mapped and typed with Pydantic settings parsing.
     """
+
     DATABASE_URL: str = Field(default="postgresql+asyncpg://postgres:postgres@localhost:5432/cobane")
     JWT_SECRET_KEY: str = Field(default="devsecretkeychangeinproductionatleast32chars")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -25,11 +27,7 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8000
     FRONTEND_PORT: int = 5173
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
@@ -44,5 +42,6 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [item.strip() for item in v.split(",") if item.strip()]
         return v
+
 
 settings = Settings()

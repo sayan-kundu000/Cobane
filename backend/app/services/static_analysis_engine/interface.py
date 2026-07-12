@@ -2,6 +2,7 @@ import abc
 from typing import Dict, Any, List
 from app.services.static_analysis_engine.models import NormalizedFinding
 
+
 class BaseAnalyzer(abc.ABC):
     """Abstract base class establishing the contract that all static analysis adapters must satisfy."""
 
@@ -27,4 +28,3 @@ class BaseAnalyzer(abc.ABC):
     def normalize(self, raw_output: Dict[str, Any], file_path: str) -> List[NormalizedFinding]:
         """Converts raw tool output dictionaries to a list of standard NormalizedFinding objects."""
         pass
-

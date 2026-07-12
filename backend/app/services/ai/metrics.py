@@ -1,6 +1,6 @@
 class AIMetricsTracker:
     """Simple in-memory diagnostics tracker collecting request volumes and latency metrics."""
-    
+
     def __init__(self):
         self.total_requests: int = 0
         self.successful_requests: int = 0
@@ -50,7 +50,8 @@ class AIMetricsTracker:
             "total_retries": self.total_retries,
             "total_tokens_estimated": self.total_tokens_estimated,
             "average_response_time_seconds": round(self.average_response_time, 3),
-            "success_rate": round(self.success_rate, 3)
+            "success_rate": round(self.success_rate, 3),
         }
+
 
 ai_metrics = AIMetricsTracker()

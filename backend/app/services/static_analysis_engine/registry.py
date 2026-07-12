@@ -1,6 +1,7 @@
 from typing import Dict, Type, List
 from app.services.static_analysis_engine.interface import BaseAnalyzer
 
+
 class AnalyzerRegistry:
     """Manages static analyzer tool registrations dynamically."""
 
@@ -21,5 +22,6 @@ class AnalyzerRegistry:
     def list_registered(self) -> List[str]:
         """Lists all registered static analyzer key names."""
         return list(self._analyzers.keys())
+
 
 analyzer_registry = AnalyzerRegistry()

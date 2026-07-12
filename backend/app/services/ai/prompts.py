@@ -30,12 +30,7 @@ class PromptManager:
         )
 
     @staticmethod
-    def get_user_prompt(
-        filename: str,
-        language: str,
-        code_content: str,
-        static_context: str
-    ) -> str:
+    def get_user_prompt(filename: str, language: str, code_content: str, static_context: str) -> str:
         """Compiles code content and static diagnostics context into a formatted user prompt."""
         return (
             f"Review Request Details:\n"

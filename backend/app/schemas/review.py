@@ -2,11 +2,16 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
+
 class ReviewBase(BaseModel):
     project_id: int
 
+
 class ReviewCreate(ReviewBase):
-    uploaded_source_id: Optional[int] = Field(default=None, description="Uploaded source ID to review. If omitted, uses latest.")
+    uploaded_source_id: Optional[int] = Field(
+        default=None, description="Uploaded source ID to review. If omitted, uses latest."
+    )
+
 
 class ReviewFindingResponse(BaseModel):
     id: int
@@ -23,6 +28,7 @@ class ReviewFindingResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ReviewMetricsResponse(BaseModel):
     id: int
     review_id: int
@@ -34,6 +40,7 @@ class ReviewMetricsResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ReportResponse(BaseModel):
     id: int
     review_id: int
@@ -42,6 +49,7 @@ class ReportResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ReviewDetailResponse(ReviewBase):
     id: int
@@ -56,6 +64,7 @@ class ReviewDetailResponse(ReviewBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ReviewResponse(ReviewBase):
     id: int
     status: str = "pending"
@@ -63,7 +72,7 @@ class ReviewResponse(ReviewBase):
     radon_mi_score: Optional[float] = None
     bandit_issues_count: Optional[int] = None
     ai_review_completed: bool = False
-    
+
     static_analysis_report: Optional[Dict[str, Any]] = None
     ai_suggestions: Optional[Dict[str, Any]] = None
     metrics: Optional[Dict[str, Any]] = None

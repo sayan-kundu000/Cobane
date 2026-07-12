@@ -13,5 +13,5 @@ __all__ = [
     "MLService",
     "StaticAnalysisService",
     "ProjectService",
-    "ReviewService"
+    "ReviewService",
 ]

@@ -22,5 +22,5 @@ __all__ = [
     "PylintAdapter",
     "BanditAdapter",
     "RadonAdapter",
-    "StaticAnalysisOrchestrator"
+    "StaticAnalysisOrchestrator",
 ]

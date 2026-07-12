@@ -1,5 +1,6 @@
 from typing import List, Dict, Any, Optional
 
+
 class ContextBuilder:
     """Formats code static checker findings and complexity metrics into structured prompt contexts."""
 
@@ -8,7 +9,7 @@ class ContextBuilder:
         """Formats the ORM review findings or dict structures into a structured list block."""
         if not findings:
             return "No previous static analysis issues or vulnerabilities were detected."
-            
+
         lines = ["Detected static analysis check warnings:"]
         for f in findings:
             if hasattr(f, "provider"):
@@ -27,7 +28,7 @@ class ContextBuilder:
                 continue
 
             lines.append(f"- [{provider.upper()}] Line {line}: [{severity.upper()}] ({category}) {msg}")
-            
+
         return "\n".join(lines)
 
     @staticmethod
@@ -35,7 +36,7 @@ class ContextBuilder:
         """Formats complexity metrics details into descriptive prompt contexts."""
         if not metrics:
             return "No code complexity statistics are available."
-            
+
         if hasattr(metrics, "cyclomatic_complexity"):
             cc = metrics.cyclomatic_complexity
             mi = metrics.maintainability_index

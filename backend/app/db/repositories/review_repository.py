@@ -7,9 +7,10 @@ from app.models.review import Review
 from app.schemas.query import QueryParams
 from app.core.exceptions import ValidationException
 
+
 class ReviewRepository(BaseRepository[Review]):
     """Repository managing Review metrics and reports query aggregations."""
-    
+
     def __init__(self, db_session: AsyncSession):
         super().__init__(Review, db_session)
 
@@ -19,30 +20,28 @@ class ReviewRepository(BaseRepository[Review]):
             func.avg(Review.pylint_score).label("avg_pylint"),
             func.avg(Review.radon_mi_score).label("avg_radon"),
             func.sum(Review.bandit_issues_count).label("total_bandit_issues"),
-            func.count(Review.id).label("total_reviews")
+            func.count(Review.id).label("total_reviews"),
         ).filter(Review.project_id == project_id_val)
-        
+
         result = await self.db.execute(query)
         stats = result.first()
-        
+
         if stats and stats.total_reviews > 0:
             return {
                 "average_pylint_score": float(stats.avg_pylint or 0.0),
                 "average_maintainability_index": float(stats.avg_radon or 0.0),
                 "total_bandit_vulnerabilities": int(stats.total_bandit_issues or 0),
-                "total_reviews_conducted": int(stats.total_reviews)
+                "total_reviews_conducted": int(stats.total_reviews),
             }
         return {
             "average_pylint_score": 0.0,
             "average_maintainability_index": 0.0,
             "total_bandit_vulnerabilities": 0,
-            "total_reviews_conducted": 0
+            "total_reviews_conducted": 0,
         }
 
     async def search_and_filter(
-        self,
-        params: QueryParams,
-        project_id: Optional[int] = None
+        self, params: QueryParams, project_id: Optional[int] = None
     ) -> Tuple[List[Review], int]:
         """Lists reviews matching paginated, searched, sorted, and filtered criteria."""
         query = select(Review)
@@ -59,12 +58,11 @@ class ReviewRepository(BaseRepository[Review]):
         # Keyword search (status or source filename)
         if params.search.q:
             from app.models.project import UploadedSource
+
             keyword = f"%{params.search.q}%"
             query = query.join(UploadedSource)
             joined_source = True
-            query = query.filter(
-                Review.status.ilike(keyword) | UploadedSource.filename.ilike(keyword)
-            )
+            query = query.filter(Review.status.ilike(keyword) | UploadedSource.filename.ilike(keyword))
 
         # Apply specific filters
         if params.filters.status:
@@ -72,6 +70,7 @@ class ReviewRepository(BaseRepository[Review]):
 
         if params.filters.language:
             from app.models.project import UploadedSource
+
             if not joined_source:
                 query = query.join(UploadedSource)
                 joined_source = True

@@ -6,12 +6,16 @@ from app.models.base import Base, BaseModel
 if TYPE_CHECKING:
     from app.models.project import Project, UploadedSource
 
+
 class Review(Base, BaseModel):
     """Database model mapping complete AI and static code runs."""
+
     __tablename__ = "reviews"
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
-    uploaded_source_id: Mapped[int] = mapped_column(ForeignKey("uploaded_sources.id", ondelete="CASCADE"), nullable=False)
+    uploaded_source_id: Mapped[int] = mapped_column(
+        ForeignKey("uploaded_sources.id", ondelete="CASCADE"), nullable=False
+    )
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, completed, failed
     pylint_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     radon_mi_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
@@ -21,24 +25,17 @@ class Review(Base, BaseModel):
     project: Mapped["Project"] = relationship("Project", back_populates="reviews")
     uploaded_source: Mapped["UploadedSource"] = relationship("UploadedSource", back_populates="reviews")
     findings: Mapped[List["ReviewFinding"]] = relationship(
-        "ReviewFinding",
-        back_populates="review",
-        cascade="all, delete-orphan"
+        "ReviewFinding", back_populates="review", cascade="all, delete-orphan"
     )
     metrics: Mapped[Optional["ReviewMetrics"]] = relationship(
-        "ReviewMetrics",
-        back_populates="review",
-        uselist=False,
-        cascade="all, delete-orphan"
+        "ReviewMetrics", back_populates="review", uselist=False, cascade="all, delete-orphan"
     )
-    reports: Mapped[List["Report"]] = relationship(
-        "Report",
-        back_populates="review",
-        cascade="all, delete-orphan"
-    )
+    reports: Mapped[List["Report"]] = relationship("Report", back_populates="review", cascade="all, delete-orphan")
+
 
 class ReviewFinding(Base, BaseModel):
     """Database model storing granular static checker warnings and AI advice details."""
+
     __tablename__ = "review_findings"
 
     review_id: Mapped[int] = mapped_column(ForeignKey("reviews.id", ondelete="CASCADE"), nullable=False)
@@ -53,8 +50,10 @@ class ReviewFinding(Base, BaseModel):
 
     review: Mapped["Review"] = relationship("Review", back_populates="findings")
 
+
 class ReviewMetrics(Base, BaseModel):
     """Database model storing complexity aggregations."""
+
     __tablename__ = "review_metrics"
 
     review_id: Mapped[int] = mapped_column(ForeignKey("reviews.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -66,8 +65,10 @@ class ReviewMetrics(Base, BaseModel):
 
     review: Mapped["Review"] = relationship("Review", back_populates="metrics")
 
+
 class Report(Base, BaseModel):
     """Database model tracking exported PDF, HTML, or Markdown summaries."""
+
     __tablename__ = "reports"
 
     review_id: Mapped[int] = mapped_column(ForeignKey("reviews.id", ondelete="CASCADE"), nullable=False)

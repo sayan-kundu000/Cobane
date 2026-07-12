@@ -9,6 +9,7 @@ from app.services.static_analysis_engine.models import NormalizedFinding, Normal
 from app.core.exceptions import ValidationException
 from app.core.logging import analysis_logger
 
+
 class RadonAdapter(BaseAnalyzer):
     """Adapter programmatically executing Radon programmatically to collect code complexities and LOC metrics."""
 
@@ -58,9 +59,7 @@ class RadonAdapter(BaseAnalyzer):
         args = self._compile_args(subcommand, file_path)
         try:
             process = await asyncio.create_subprocess_exec(
-                *args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
             stdout_bytes, _ = await asyncio.wait_for(process.communicate(), timeout=self.timeout_seconds)
             return self._parse_raw_stdout(stdout_bytes.decode("utf-8", errors="ignore"))
@@ -86,7 +85,7 @@ class RadonAdapter(BaseAnalyzer):
         cc_task, mi_task, raw_task = await asyncio.gather(
             self._run_subcommand_async("cc", file_path),
             self._run_subcommand_async("mi", file_path),
-            self._run_subcommand_async("raw", file_path)
+            self._run_subcommand_async("raw", file_path),
         )
         return {"cc": cc_task, "mi": mi_task, "raw": raw_task}
 
@@ -105,7 +104,7 @@ class RadonAdapter(BaseAnalyzer):
                 name = item.get("name", "")
                 item_type = item.get("type", "function")
                 line = item.get("lineno", 1)
-                
+
                 findings.append(
                     NormalizedFinding(
                         analyzer="radon",
@@ -117,7 +116,7 @@ class RadonAdapter(BaseAnalyzer):
                         file_path=os.path.basename(file_path),
                         function_name=name if item_type == "function" else None,
                         line_number=line,
-                        confidence="high"
+                        confidence="high",
                     )
                 )
         return findings
@@ -157,5 +156,5 @@ class RadonAdapter(BaseAnalyzer):
             maintainability_index=float(mi),
             loc=int(loc),
             functions_count=funcs,
-            classes_count=classes
+            classes_count=classes,
         )

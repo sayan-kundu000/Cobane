@@ -7,9 +7,7 @@ DEFAULT_ENCODING: str = "utf-8"
 
 # Upload and code validation configurations
 MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB limit
-SUPPORTED_FILE_TYPES: set[str] = {
-    ".py", ".js", ".ts", ".jsx", ".tsx", ".cs", ".cpp", ".sql", ".r"
-}
+SUPPORTED_FILE_TYPES: set[str] = {".py", ".js", ".ts", ".jsx", ".tsx", ".cs", ".cpp", ".sql", ".r"}
 
 # Pagination guidelines
 DEFAULT_PAGE: int = 1

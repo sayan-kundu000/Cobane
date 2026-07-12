@@ -10,6 +10,7 @@ from app.services.static_analysis_engine.severity import SeverityMapper
 from app.core.exceptions import ValidationException
 from app.core.logging import analysis_logger
 
+
 class PylintAdapter(BaseAnalyzer):
     """Adapter programmatically executing Pylint programmatically and normalizing output logs."""
 
@@ -42,12 +43,7 @@ class PylintAdapter(BaseAnalyzer):
         analysis_logger.info("Executing Pylint sync command: %s", " ".join(args))
 
         try:
-            result = subprocess.run(
-                args,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds
-            )
+            result = subprocess.run(args, capture_output=True, text=True, timeout=self.timeout_seconds)
             parsed = self._parse_raw_stdout(result.stdout)
             return {"results": parsed, "success": True}
         except subprocess.TimeoutExpired as e:
@@ -67,15 +63,10 @@ class PylintAdapter(BaseAnalyzer):
 
         try:
             process = await asyncio.create_subprocess_exec(
-                *args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
             try:
-                stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=self.timeout_seconds
-                )
+                stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=self.timeout_seconds)
                 stdout = stdout_bytes.decode("utf-8", errors="ignore")
                 parsed = self._parse_raw_stdout(stdout)
                 return {"results": parsed, "success": True}
@@ -103,7 +94,7 @@ class PylintAdapter(BaseAnalyzer):
             rule = f"{msg_id} ({symbol})" if symbol else msg_id
             description = item.get("message", "Pylint check warning.")
             recommendation = f"Refactor suggestion to resolve Pylint warning rule: {symbol}."
-            
+
             findings.append(
                 NormalizedFinding(
                     analyzer="pylint",
@@ -115,7 +106,7 @@ class PylintAdapter(BaseAnalyzer):
                     file_path=os.path.basename(file_path),
                     function_name=item.get("obj") or None,
                     line_number=line,
-                    confidence="high"
+                    confidence="high",
                 )
             )
         return findings

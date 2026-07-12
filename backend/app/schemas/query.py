@@ -5,8 +5,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
+
 class PaginationParams(BaseModel):
     """Pydantic model representing pagination query parameters."""
+
     page: int = Field(default=1, ge=1, description="Page number (1-indexed)")
     page_size: int = Field(default=20, ge=1, le=100, description="Items per page")
 
@@ -22,8 +24,10 @@ class PaginationParams(BaseModel):
         """Limit count in SQL query."""
         return self.page_size
 
+
 class SortParams(BaseModel):
     """Pydantic model representing sorting query parameters."""
+
     sort_by: str = Field(default="id", description="Field to sort by")
     ascending: bool = Field(default=True, description="True for ascending, False for descending")
 
@@ -34,8 +38,10 @@ class SortParams(BaseModel):
         """Helper to generate text sorting identifier."""
         return self.sort_by if self.ascending else f"-{self.sort_by}"
 
+
 class FilterParams(BaseModel):
     """Pydantic model representing filtering query parameters."""
+
     owner_id: Optional[int] = Field(default=None, description="Filter by owner user ID")
     project_id: Optional[int] = Field(default=None, description="Filter by project ID")
     language: Optional[str] = Field(default=None, description="Filter by code language")
@@ -48,14 +54,18 @@ class FilterParams(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
+
 class SearchParams(BaseModel):
     """Pydantic model representing search keyword queries."""
+
     q: Optional[str] = Field(default=None, description="Search keyword query")
 
     model_config = ConfigDict(extra="ignore")
 
+
 class QueryParams(BaseModel):
     """Aggregated query criteria including pagination, sorting, filters, and keyword search."""
+
     pagination: PaginationParams = Field(default_factory=PaginationParams)
     sort: SortParams = Field(default_factory=SortParams)
     filters: FilterParams = Field(default_factory=FilterParams)
@@ -63,8 +73,10 @@ class QueryParams(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
+
 class PaginationMetadata(BaseModel):
     """Metadata response payload conveying result metrics."""
+
     page: int = Field(..., description="Current page number (1-indexed)")
     page_size: int = Field(..., description="Number of items returned in current page")
     total_items: int = Field(..., description="Total items available matching filters")
@@ -72,12 +84,15 @@ class PaginationMetadata(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class PaginatedResponse(BaseModel, Generic[T]):
     """Standardized wrapper container housing paginated list responses and metadata."""
+
     items: List[T] = Field(..., description="List of items returned for the current page")
     pagination: PaginationMetadata = Field(..., description="Pagination metadata information")
 
     model_config = ConfigDict(from_attributes=True)
+
 
 def get_query_params(
     page: int = Query(default=1, ge=1, description="Page number (1-indexed)"),
@@ -93,7 +108,7 @@ def get_query_params(
     max_score: Optional[float] = Query(default=None, description="Filter by maximum score"),
     start_date: Optional[datetime] = Query(default=None, description="Filter by items created after date"),
     end_date: Optional[datetime] = Query(default=None, description="Filter by items created before date"),
-    q: Optional[str] = Query(default=None, description="Search keyword query")
+    q: Optional[str] = Query(default=None, description="Search keyword query"),
 ) -> QueryParams:
     """FastAPI Dependency injector function constructing a clean QueryParams schema object."""
     return QueryParams(
@@ -108,7 +123,7 @@ def get_query_params(
             min_score=min_score,
             max_score=max_score,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
         ),
-        search=SearchParams(q=q)
+        search=SearchParams(q=q),
     )

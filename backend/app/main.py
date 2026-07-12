@@ -7,12 +7,14 @@ from app.core.middleware import register_middlewares
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import app_logger
 
+
 # Define system startup/shutdown lifecycle hook manager
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     app_logger.info("Initializing Cobane API runtime environment...")
     yield
     app_logger.info("Tearing down Cobane API database engines and sockets...")
+
 
 app = FastAPI(
     title="Cobane API",

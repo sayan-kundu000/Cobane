@@ -6,8 +6,10 @@ from app.models.base import Base, BaseModel
 if TYPE_CHECKING:
     from app.models.project import Project
 
+
 class User(Base, BaseModel):
     """Database model mapping general accounts credentials."""
+
     __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
@@ -17,27 +19,17 @@ class User(Base, BaseModel):
 
     # Core relationship mappings
     profile: Mapped["UserProfile"] = relationship(
-        "UserProfile",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-        lazy="selectin"
+        "UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin"
     )
     preference: Mapped["UserPreference"] = relationship(
-        "UserPreference",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-        lazy="selectin"
+        "UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin"
     )
-    projects: Mapped[List["Project"]] = relationship(
-        "Project",
-        back_populates="owner",
-        cascade="all, delete-orphan"
-    )
+    projects: Mapped[List["Project"]] = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
+
 
 class UserProfile(Base, BaseModel):
     """Database model storing demographic user metadata."""
+
     __tablename__ = "user_profiles"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -47,8 +39,10 @@ class UserProfile(Base, BaseModel):
 
     user: Mapped["User"] = relationship("User", back_populates="profile")
 
+
 class UserPreference(Base, BaseModel):
     """Database model managing customized styling options."""
+
     __tablename__ = "user_preferences"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)

@@ -9,6 +9,7 @@ from app.core.security import hash_password, verify_password, create_access_toke
 from app.core.exceptions import AuthException, ValidationException, NotFoundException
 from app.core.logging import security_logger
 
+
 class AuthService:
     """Service orchestrating business operations for user registrations, authentication, and token cycles."""
 
@@ -37,15 +38,8 @@ class AuthService:
             username=register_data.username,
             hashed_password=hashed,
             is_superuser=False,
-            profile=UserProfile(
-                full_name=None,
-                avatar_url=None,
-                bio=None
-            ),
-            preference=UserPreference(
-                theme="light",
-                receiving_notifications=True
-            )
+            profile=UserProfile(full_name=None, avatar_url=None, bio=None),
+            preference=UserPreference(theme="light", receiving_notifications=True),
         )
         db.add(user)
         await db.commit()
@@ -74,7 +68,7 @@ class AuthService:
         return {
             "access_token": create_access_token(token_data),
             "refresh_token": create_refresh_token(token_data),
-            "token_type": "bearer"
+            "token_type": "bearer",
         }
 
     @staticmethod
@@ -96,11 +90,7 @@ class AuthService:
 
         # Re-issue Access Token, keep same Refresh Token
         token_data = {"sub": user.username, "role": "admin" if user.is_superuser else "user"}
-        return {
-            "access_token": create_access_token(token_data),
-            "refresh_token": refresh_token,
-            "token_type": "bearer"
-        }
+        return {"access_token": create_access_token(token_data), "refresh_token": refresh_token, "token_type": "bearer"}
 
     @staticmethod
     async def update_profile(db: AsyncSession, user_id: int, profile_data: UserProfileUpdate) -> UserProfile:

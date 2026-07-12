@@ -12,6 +12,7 @@ from app.services.ai_service import AIService
 from app.core.exceptions import NotFoundException, ForbiddenException, ValidationException
 from app.core.logging import app_logger
 
+
 class ReviewService:
     """Service layer coordinating static analysis checkers, AI prompts, and parsing review records."""
 
@@ -31,8 +32,7 @@ class ReviewService:
         if source_id:
             source_res = await db.execute(
                 select(UploadedSource).filter(
-                    UploadedSource.id == source_id,
-                    UploadedSource.project_id == review_in.project_id
+                    UploadedSource.id == source_id, UploadedSource.project_id == review_in.project_id
                 )
             )
             source = source_res.scalars().first()
@@ -58,7 +58,7 @@ class ReviewService:
             pylint_score=None,
             radon_mi_score=None,
             bandit_issues_count=None,
-            ai_review_completed=False
+            ai_review_completed=False,
         )
         db.add(review)
         await db.flush()  # Retrieves review.id
@@ -75,22 +75,22 @@ class ReviewService:
                     "category": "style",
                     "severity": "warning",
                     "line_number": 10,
-                    "message": "Missing docstring at module level (missing-docstring)."
+                    "message": "Missing docstring at module level (missing-docstring).",
                 },
                 {
                     "provider": "bandit",
                     "category": "security",
                     "severity": "critical",
                     "line_number": 18,
-                    "message": "Use of assert statement detected (bandit B101 warning)."
-                }
+                    "message": "Use of assert statement detected (bandit B101 warning).",
+                },
             ]
             static_metrics = {
                 "cyclomatic_complexity": 3,
                 "maintainability_index": 90.0,
                 "loc": 45,
                 "functions_count": 2,
-                "classes_count": 1
+                "classes_count": 1,
             }
 
             ai_service = AIService()
@@ -100,7 +100,7 @@ class ReviewService:
                 filename=source.filename,
                 language=source.language or "python",
                 findings=static_findings,
-                metrics=static_metrics
+                metrics=static_metrics,
             )
 
             # 5. Populate stats and findings
@@ -129,7 +129,7 @@ class ReviewService:
                     message="Missing docstring at module level (missing-docstring).",
                     code_snippet="import os",
                     suggestion="Add descriptive module-level docstrings at the beginning of files.",
-                    provider="pylint"
+                    provider="pylint",
                 )
             )
 
@@ -144,7 +144,7 @@ class ReviewService:
                     message="Use of assert statement detected (bandit B101 warning).",
                     code_snippet="assert value is not None",
                     suggestion="Avoid using asserts in production context; raise clean runtime exceptions.",
-                    provider="bandit"
+                    provider="bandit",
                 )
             )
 
@@ -161,7 +161,7 @@ class ReviewService:
                         message=item.get("comment", "Improve naming or formatting logic."),
                         code_snippet="x = 42",
                         suggestion=item.get("suggestion", "Use explicit descriptive variable names."),
-                        provider="ai"
+                        provider="ai",
                     )
                 )
 
@@ -174,15 +174,13 @@ class ReviewService:
                 maintainability_index=review.radon_mi_score,
                 loc=45,
                 functions_count=2,
-                classes_count=1
+                classes_count=1,
             )
             db.add(metrics)
 
             # 8. Create a report export metadata record
             report = Report(
-                review_id=review.id,
-                format="pdf",
-                file_path=f"reports/exports/review-{review.id}-summary.pdf"
+                review_id=review.id, format="pdf", file_path=f"reports/exports/review-{review.id}-summary.pdf"
             )
             db.add(report)
 
@@ -218,9 +216,7 @@ class ReviewService:
 
     @staticmethod
     async def list_reviews(
-        db: AsyncSession,
-        params: QueryParams,
-        project_id: Optional[int] = None
+        db: AsyncSession, params: QueryParams, project_id: Optional[int] = None
     ) -> Tuple[List[Review], int]:
         """Lists reviews matching criteria, optionally scoped to a single project."""
         review_repo = ReviewRepository(db)
@@ -236,7 +232,7 @@ class ReviewService:
         review_repo = ReviewRepository(db)
         success = await review_repo.delete(review_id)
         await db.commit()
-        
+
         app_logger.info("Review ID %d successfully deleted by owner %d.", review_id, owner_id)
         return success
 
@@ -247,9 +243,7 @@ class ReviewService:
         await review_service.get_review(db, review_id, owner_id)
 
         result = await db.execute(
-            select(ReviewFinding)
-            .filter(ReviewFinding.review_id == review_id)
-            .order_by(ReviewFinding.line_number)
+            select(ReviewFinding).filter(ReviewFinding.review_id == review_id).order_by(ReviewFinding.line_number)
         )
         return list(result.scalars().all())
 
@@ -259,9 +253,7 @@ class ReviewService:
         review_service = ReviewService()
         await review_service.get_review(db, review_id, owner_id)
 
-        result = await db.execute(
-            select(ReviewMetrics).filter(ReviewMetrics.review_id == review_id)
-        )
+        result = await db.execute(select(ReviewMetrics).filter(ReviewMetrics.review_id == review_id))
         metrics = result.scalars().first()
         if not metrics:
             raise NotFoundException(f"Metrics not calculated for review {review_id}.")
@@ -273,7 +265,5 @@ class ReviewService:
         review_service = ReviewService()
         await review_service.get_review(db, review_id, owner_id)
 
-        result = await db.execute(
-            select(Report).filter(Report.review_id == review_id)
-        )
+        result = await db.execute(select(Report).filter(Report.review_id == review_id))
         return list(result.scalars().all())

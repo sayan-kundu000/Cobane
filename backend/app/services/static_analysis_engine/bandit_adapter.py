@@ -10,6 +10,7 @@ from app.services.static_analysis_engine.severity import SeverityMapper
 from app.core.exceptions import ValidationException
 from app.core.logging import analysis_logger
 
+
 class BanditAdapter(BaseAnalyzer):
     """Adapter programmatically executing Bandit programmatically to scan for security vulnerabilities."""
 
@@ -42,12 +43,7 @@ class BanditAdapter(BaseAnalyzer):
         analysis_logger.info("Executing Bandit sync command: %s", " ".join(args))
 
         try:
-            result = subprocess.run(
-                args,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds
-            )
+            result = subprocess.run(args, capture_output=True, text=True, timeout=self.timeout_seconds)
             parsed = self._parse_raw_stdout(result.stdout)
             return parsed
         except subprocess.TimeoutExpired as e:
@@ -67,15 +63,10 @@ class BanditAdapter(BaseAnalyzer):
 
         try:
             process = await asyncio.create_subprocess_exec(
-                *args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
             try:
-                stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=self.timeout_seconds
-                )
+                stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=self.timeout_seconds)
                 stdout = stdout_bytes.decode("utf-8", errors="ignore")
                 parsed = self._parse_raw_stdout(stdout)
                 return parsed
@@ -102,7 +93,7 @@ class BanditAdapter(BaseAnalyzer):
             test_name = item.get("test_name", "")
             rule = f"{test_id} ({test_name})" if test_name else test_id
             description = item.get("issue_text", "Bandit check warning.")
-            
+
             more_info = item.get("more_info", "")
             rec = f"Review security constraints to address Bandit issue. Avoid unsafe programming constructs."
             if more_info:
@@ -119,7 +110,7 @@ class BanditAdapter(BaseAnalyzer):
                     file_path=os.path.basename(file_path),
                     function_name=None,
                     line_number=line,
-                    confidence=item.get("issue_confidence", "medium").lower()
+                    confidence=item.get("issue_confidence", "medium").lower(),
                 )
             )
         return findings

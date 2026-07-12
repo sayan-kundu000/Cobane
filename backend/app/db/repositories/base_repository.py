@@ -6,9 +6,10 @@ from app.models.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 
+
 class BaseRepository(Generic[ModelType]):
     """Generic CRUD repository implementing foundational query patterns for ORM entities."""
-    
+
     def __init__(self, model: Type[ModelType], db_session: AsyncSession):
         self.model = model
         self.db = db_session
@@ -32,11 +33,11 @@ class BaseRepository(Generic[ModelType]):
         limit: int = 20,
         filters: Dict[str, Any] = None,
         sort_by: str = "id",
-        ascending: bool = True
+        ascending: bool = True,
     ) -> List[ModelType]:
         """Lists multiple entity records matching generic filters and order settings."""
         query = select(self.model)
-        
+
         # Apply standard matching filters
         if filters:
             for field, val in filters.items():
@@ -52,7 +53,7 @@ class BaseRepository(Generic[ModelType]):
 
         # Apply pagination offsets
         query = query.offset(skip).limit(limit)
-        
+
         result = await self.db.execute(query)
         return list(result.scalars().all())
 

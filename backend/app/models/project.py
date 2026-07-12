@@ -7,8 +7,10 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.review import Review
 
+
 class Project(Base, BaseModel):
     """Database model representing reviewable target workspaces."""
+
     __tablename__ = "projects"
 
     name: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
@@ -17,18 +19,14 @@ class Project(Base, BaseModel):
 
     owner: Mapped["User"] = relationship("User", back_populates="projects")
     uploaded_sources: Mapped[List["UploadedSource"]] = relationship(
-        "UploadedSource",
-        back_populates="project",
-        cascade="all, delete-orphan"
+        "UploadedSource", back_populates="project", cascade="all, delete-orphan"
     )
-    reviews: Mapped[List["Review"]] = relationship(
-        "Review",
-        back_populates="project",
-        cascade="all, delete-orphan"
-    )
+    reviews: Mapped[List["Review"]] = relationship("Review", back_populates="project", cascade="all, delete-orphan")
+
 
 class UploadedSource(Base, BaseModel):
     """Database model mapping uploaded codebase file attachments."""
+
     __tablename__ = "uploaded_sources"
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
@@ -41,7 +39,5 @@ class UploadedSource(Base, BaseModel):
 
     project: Mapped["Project"] = relationship("Project", back_populates="uploaded_sources")
     reviews: Mapped[List["Review"]] = relationship(
-        "Review",
-        back_populates="uploaded_source",
-        cascade="all, delete-orphan"
+        "Review", back_populates="uploaded_source", cascade="all, delete-orphan"
     )

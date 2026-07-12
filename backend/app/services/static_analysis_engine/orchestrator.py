@@ -11,6 +11,7 @@ from app.services.static_analysis_engine.radon_adapter import RadonAdapter
 from app.core.exceptions import ValidationException
 from app.core.logging import analysis_logger
 
+
 class StaticAnalysisOrchestrator:
     """Orchestrates static analysis executions, validating inputs and aggregating normalized outcomes."""
 
@@ -36,7 +37,9 @@ class StaticAnalysisOrchestrator:
             raise ValidationException("Failed to read file size metadata.") from e
 
         if size_kb > static_config.max_file_size_kb:
-            raise ValidationException(f"File size ({size_kb:.2f} KB) exceeds allowed limit of {static_config.max_file_size_kb} KB.")
+            raise ValidationException(
+                f"File size ({size_kb:.2f} KB) exceeds allowed limit of {static_config.max_file_size_kb} KB."
+            )
 
         if size_kb == 0:
             raise ValidationException("File is empty; analysis cannot be conducted.")
@@ -66,7 +69,7 @@ class StaticAnalysisOrchestrator:
         radon_metrics: NormalizedMetrics = radon_inst.normalize_metrics(radon_raw, file_path)
 
         all_findings = pylint_findings + bandit_findings + radon_findings
-        
+
         pylint_score = PylintAdapter.calculate_score(pylint_raw.get("results", []))
         radon_mi_score = radon_metrics.maintainability_index
         bandit_issues_count = len(bandit_findings)
@@ -79,7 +82,7 @@ class StaticAnalysisOrchestrator:
             metrics=radon_metrics,
             pylint_score=pylint_score,
             radon_mi_score=radon_mi_score,
-            bandit_issues_count=bandit_issues_count
+            bandit_issues_count=bandit_issues_count,
         )
 
     async def run_analysis_async(self, file_path: str) -> StaticAnalysisReport:
@@ -97,9 +100,7 @@ class StaticAnalysisOrchestrator:
         radon_inst = radon_cls(timeout_seconds=static_config.timeout_seconds)
 
         pylint_task, bandit_task, radon_task = await asyncio.gather(
-            pylint_inst.run_async(file_path),
-            bandit_inst.run_async(file_path),
-            radon_inst.run_async(file_path)
+            pylint_inst.run_async(file_path), bandit_inst.run_async(file_path), radon_inst.run_async(file_path)
         )
 
         pylint_findings = pylint_inst.normalize(pylint_task, file_path)
@@ -109,7 +110,7 @@ class StaticAnalysisOrchestrator:
         radon_metrics: NormalizedMetrics = radon_inst.normalize_metrics(radon_task, file_path)
 
         all_findings = pylint_findings + bandit_findings + radon_findings
-        
+
         pylint_score = PylintAdapter.calculate_score(pylint_task.get("results", []))
         radon_mi_score = radon_metrics.maintainability_index
         bandit_issues_count = len(bandit_findings)
@@ -122,5 +123,5 @@ class StaticAnalysisOrchestrator:
             metrics=radon_metrics,
             pylint_score=pylint_score,
             radon_mi_score=radon_mi_score,
-            bandit_issues_count=bandit_issues_count
+            bandit_issues_count=bandit_issues_count,
         )
