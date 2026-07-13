@@ -12,6 +12,21 @@ from app.core.logging import app_logger
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     app_logger.info("Initializing Cobane API runtime environment...")
+    try:
+        from app.core.database import engine, AsyncSessionLocal
+        from app.models.base import Base
+        from app.db.seed import seed_database
+
+        app_logger.info("Verifying and creating database tables...")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        app_logger.info("Checking database seeding...")
+        async with AsyncSessionLocal() as session:
+            await seed_database(session)
+    except Exception as e:
+        app_logger.error(f"Database initialization/seeding failed on startup: {e}")
+        
     yield
     app_logger.info("Tearing down Cobane API database engines and sockets...")
 
