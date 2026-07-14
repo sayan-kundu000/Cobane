@@ -80,7 +80,7 @@ export const BackendStatus: React.FC = () => {
 
   // UI state-based styles
   const getStatusStyles = () => {
-    if (!data) return { cardBg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-800', accent: 'bg-gray-500' };
+    if (!data) return { cardBg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-800', badge: 'bg-gray-500 text-white', desc: 'Connecting to backend...' };
     switch (data.status) {
       case 'green':
         return {
@@ -105,6 +105,14 @@ export const BackendStatus: React.FC = () => {
           text: 'text-red-800 dark:text-red-300',
           badge: 'bg-red-500 text-white',
           desc: 'Critical issues detected. Connections or key failures are active. Serious action needed now!'
+        };
+      default:
+        return {
+          cardBg: 'bg-gray-50 dark:bg-gray-950/20',
+          border: 'border-gray-500 dark:border-gray-600',
+          text: 'text-gray-800 dark:text-gray-300',
+          badge: 'bg-gray-500 text-white',
+          desc: 'Unknown backend state.'
         };
     }
   };
