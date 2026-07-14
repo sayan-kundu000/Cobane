@@ -1,7 +1,7 @@
 services:
   # Web service instance running our FastAPI backend container
   - type: web
-    name: cobane-backend
+    name: cobane-backend-status
     runtime: docker
     dockerfilePath: backend/Dockerfile.prod
     dockerContext: backend

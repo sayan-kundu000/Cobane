@@ -19,9 +19,29 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+def reinitialize_database(new_url: str):
+    """Reinitializes the database engine and sessionmaker dynamically at runtime."""
+    global engine, AsyncSessionLocal
+    settings.DATABASE_URL = new_url
+    c_args = {}
+    if new_url.startswith("sqlite"):
+        c_args["check_same_thread"] = False
+    engine = create_async_engine(
+        new_url,
+        echo=settings.ENVIRONMENT == "development",
+        connect_args=c_args,
+    )
+    AsyncSessionLocal = async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+
 async def get_db():
     async with AsyncSessionLocal() as session:
         try:
             yield session
         finally:
             await session.close()
+

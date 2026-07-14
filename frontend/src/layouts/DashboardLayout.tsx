@@ -19,6 +19,9 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           <Link to="/reviews" className="block px-4 py-2 text-gray-700 rounded hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700">
             Reviews
           </Link>
+          <Link to="/backend-status" className="block px-4 py-2 text-gray-700 rounded hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700 font-semibold text-indigo-600 dark:text-indigo-400">
+            Backend Status
+          </Link>
         </nav>
       </aside>
 

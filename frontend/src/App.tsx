@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.tsx';
 import Auth from './pages/Auth.tsx';
 import Projects from './pages/Projects.tsx';
 import Reviews from './pages/Reviews.tsx';
+import BackendStatus from './pages/BackendStatus.tsx';
 
 function App() {
   return (
@@ -38,6 +39,14 @@ function App() {
               element={
                 <DashboardLayout>
                   <Reviews />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/backend-status"
+              element={
+                <DashboardLayout>
+                  <BackendStatus />
                 </DashboardLayout>
               }
             />
