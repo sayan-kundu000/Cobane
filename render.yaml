@@ -46,10 +46,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: cobane-backend-status
-          property: url
+        sync: false
     routes:
       - type: rewrite
         source: /*
