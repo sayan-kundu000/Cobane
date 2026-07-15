@@ -88,7 +88,7 @@ export const BackendStatus: React.FC = () => {
           border: 'border-green-500 dark:border-green-600',
           text: 'text-green-800 dark:text-green-300',
           badge: 'bg-green-500 text-white',
-          desc: 'Everything is fine in the backend & there are no bugs to fix.'
+          desc: 'Rogers, Wilco! The site or server works very very fine.'
         };
       case 'yellow':
         return {
@@ -96,7 +96,7 @@ export const BackendStatus: React.FC = () => {
           border: 'border-yellow-500 dark:border-yellow-600',
           text: 'text-yellow-800 dark:text-yellow-300',
           badge: 'bg-yellow-500 text-black',
-          desc: 'Backend is functional but warnings or non-critical bugs need to be resolved later.'
+          desc: 'Pan Pan! There are minor issues but the site or server works very very fine.'
         };
       case 'red':
         return {
@@ -104,7 +104,7 @@ export const BackendStatus: React.FC = () => {
           border: 'border-red-500 dark:border-red-600',
           text: 'text-red-800 dark:text-red-300',
           badge: 'bg-red-500 text-white',
-          desc: 'Critical issues detected. Connections or key failures are active. Serious action needed now!'
+          desc: "Mayday, Mayday, Mayday! There are major issues & the site or server doesn't work very very fine."
         };
       default:
         return {

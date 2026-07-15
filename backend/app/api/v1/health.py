@@ -66,21 +66,21 @@ async def get_health_status(db: AsyncSession = Depends(get_db)):
         if "sqlite" in settings.DATABASE_URL:
             # Running on SQLite is fine but counts as fallback/warning state (Yellow)
             status = "yellow"
-            message = "There are bugs that can be solved later."
+            message = "Pan Pan!"
             app_logger.warning(
                 "Running on local SQLite fallback database (test.db). System is functional but using SQLite instead of production PostgreSQL database."
             )
             app_logger.warning("Default config key 'JWT_SECRET_KEY' detected. Consider updating environment vars.")
         else:
             status = "green"
-            message = "Everything is fine without bugs."
+            message = "Rogers, Wilco!"
             app_logger.info(
                 "Active PostgreSQL database connection pool is healthy. Connection verified. System running smoothly with 0 bugs."
             )
     except Exception as e:
         # Connection failed, system is in critical state (Red)
         status = "red"
-        message = "Facing issues and needs assistance."
+        message = "Mayday, Mayday, Mayday!"
         app_logger.error(f"Database connection failed on address: {settings.DATABASE_URL}")
         app_logger.critical(f"Connection error details: {e}")
         app_logger.error("Critical failures in database connectivity. Server requires immediate healing.")
@@ -185,17 +185,17 @@ async def refresh_health_status():
 
     # Re-evaluate final status
     final_status = "green"
-    final_message = "Everything is fine without bugs."
+    final_message = "Rogers, Wilco!"
     try:
         async with db_core.AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
 
         if "sqlite" in settings.DATABASE_URL:
             final_status = "yellow"
-            final_message = "There are bugs that can be solved later."
+            final_message = "Pan Pan!"
     except Exception:
         final_status = "red"
-        final_message = "Facing issues and needs assistance."
+        final_message = "Mayday, Mayday, Mayday!"
 
     actual_logs = read_backend_logs()
     combined_logs = ["------------------ LIVE STREAM LOG BUFFER ------------------"] + actual_logs

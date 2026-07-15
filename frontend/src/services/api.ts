@@ -1,9 +1,19 @@
 import axios from 'axios';
 
 let resolvedBaseUrl = '/api/v1';
-if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'undefined' && import.meta.env.VITE_API_URL !== 'null') {
-  let url = import.meta.env.VITE_API_URL.trim();
+let url = '';
 
+if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'undefined' && import.meta.env.VITE_API_URL !== 'null') {
+  url = import.meta.env.VITE_API_URL.trim();
+} else if (typeof window !== 'undefined' && window.location.hostname.endsWith('.onrender.com')) {
+  const host = window.location.hostname;
+  if (host.includes('cobane-frontend')) {
+    const backendHost = host.replace('cobane-frontend', 'cobane-backend-status');
+    url = `https://${backendHost}`;
+  }
+}
+
+if (url) {
   // If the host is Render's internal host name (no dots and not localhost),
   // map it to the public Render subdomain.
   if (!url.startsWith('/') && !url.startsWith('//') && !/^https?:\/\//i.test(url)) {
