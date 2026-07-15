@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.config import settings
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import text
 
 async def check_connection():
     # Mask database password in console output for security
@@ -20,7 +21,7 @@ async def check_connection():
     for attempt in range(1, 31):
         try:
             async with engine.connect() as conn:
-                await conn.execute("SELECT 1")
+                await conn.execute(text("SELECT 1"))
             print("Database connection verified successfully!")
             await engine.dispose()
             return True

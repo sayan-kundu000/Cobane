@@ -2,7 +2,7 @@ import os
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from app.core.database import get_db
+from app.core.dependencies import get_db
 import app.core.database as db_core
 from app.core.responses import StandardJSONResponse
 from app.core.logging import app_logger

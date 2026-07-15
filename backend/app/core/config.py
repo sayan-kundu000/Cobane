@@ -40,9 +40,79 @@ class Settings(BaseSettings):
                 v = v.replace("postgres://", "postgresql+asyncpg://", 1)
             elif v.startswith("postgresql://"):
                 v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            elif v.startswith("sqlite://"):
+                v = v.replace("sqlite://", "sqlite+aiosqlite://", 1)
             if "sslmode=" in v:
                 v = v.replace("sslmode=", "ssl=")
+            
+            # Check reachability of the database, fallback to SQLite if unreachable
+            if not v.startswith("sqlite"):
+                from app.core.logging import app_logger
+                url_parts = v.split("@")
+                host_info = url_parts[-1] if len(url_parts) > 1 else v
+                app_logger.info(f"Verifying reachability for configured database at {host_info}...")
+                
+                if not cls._is_db_reachable(v):
+                    app_logger.warning(
+                        f"Database at {host_info} is unreachable or non-operational. Falling back to local SQLite database (test.db)."
+                    )
+                    return "sqlite+aiosqlite:///test.db"
+                
+                app_logger.info(f"Database at {host_info} is reachable and operational.")
         return v
+
+    @staticmethod
+    def _is_db_reachable(url: str) -> bool:
+        """Performs a fast TCP socket check followed by an isolated connection test."""
+        if not url or "sqlite" in url:
+            return True
+            
+        # 1. Quick TCP socket check to prevent blocking long timeouts
+        try:
+            temp_url = url
+            for scheme in ["postgresql+asyncpg://", "postgres://", "postgresql://"]:
+                if temp_url.startswith(scheme):
+                    temp_url = temp_url.replace(scheme, "http://", 1)
+                    break
+            from urllib.parse import urlparse
+            parsed = urlparse(temp_url)
+            host = parsed.hostname
+            port = parsed.port or 5432
+            if not host:
+                return False
+            import socket
+            with socket.create_connection((host, port), timeout=2.0):
+                pass
+        except Exception:
+            return False
+            
+        # 2. Detailed connection test in an isolated thread to support all event loops
+        async def _check_conn():
+            try:
+                from sqlalchemy.ext.asyncio import create_async_engine
+                from sqlalchemy import text
+                engine = create_async_engine(url)
+                async with engine.connect() as conn:
+                    await conn.execute(text("SELECT 1"))
+                await engine.dispose()
+                return True
+            except Exception:
+                return False
+                
+        import asyncio
+        import threading
+        
+        result = [False]
+        def target():
+            try:
+                result[0] = asyncio.run(_check_conn())
+            except Exception:
+                pass
+                
+        t = threading.Thread(target=target)
+        t.start()
+        t.join(timeout=5.0)
+        return result[0]
 
     @field_validator("ALLOWED_CORS_ORIGINS", mode="before")
     @classmethod
