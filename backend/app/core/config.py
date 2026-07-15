@@ -47,6 +47,9 @@ class Settings(BaseSettings):
             
             # Check reachability of the database, fallback to SQLite if unreachable
             if not v.startswith("sqlite"):
+                import os
+                if os.getenv("SKIP_DB_REACHABILITY_CHECK") == "1":
+                    return v
                 from app.core.logging import app_logger
                 url_parts = v.split("@")
                 host_info = url_parts[-1] if len(url_parts) > 1 else v
