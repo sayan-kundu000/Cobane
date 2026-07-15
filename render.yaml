@@ -38,9 +38,8 @@ services:
         value: "info"
 
   # Static site instance serving our React/Vite frontend
-  - type: web
+  - type: static
     name: cobane-frontend
-    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
