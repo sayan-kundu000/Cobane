@@ -3,33 +3,24 @@ from httpx import AsyncClient
 from tests.conftest import TestingSessionLocal
 from app.models.project import Project, UploadedSource
 
+
 async def get_auth_header(client: AsyncClient, username="projuser", email="projuser@cobane.ai") -> dict:
     """Helper to register and log in a user, returning the authorization header."""
-    reg_payload = {
-        "username": username,
-        "email": email,
-        "password": "Password123",
-        "password_confirm": "Password123"
-    }
+    reg_payload = {"username": username, "email": email, "password": "Password123", "password_confirm": "Password123"}
     await client.post("/api/v1/auth/register", json=reg_payload)
-    
-    login_payload = {
-        "email": email,
-        "password": "Password123"
-    }
+
+    login_payload = {"email": email, "password": "Password123"}
     login_res = await client.post("/api/v1/auth/login", json=login_payload)
     tokens = login_res.json()["data"]
     return {"Authorization": f"Bearer {tokens['access_token']}"}
+
 
 @pytest.mark.anyio
 async def test_create_and_get_project(client: AsyncClient):
     auth_header = await get_auth_header(client)
 
     # 1. Create project
-    create_payload = {
-        "name": "Test Python Workspace",
-        "description": "A repository of Python files."
-    }
+    create_payload = {"name": "Test Python Workspace", "description": "A repository of Python files."}
     res = await client.post("/api/v1/projects", json=create_payload, headers=auth_header)
     assert res.status_code == 201
     data = res.json()
@@ -45,13 +36,18 @@ async def test_create_and_get_project(client: AsyncClient):
     assert data_get["success"] is True
     assert data_get["data"]["id"] == project_id
 
+
 @pytest.mark.anyio
 async def test_list_projects_filtering_sorting_search(client: AsyncClient):
     auth_header = await get_auth_header(client, "listuser", "listuser@cobane.ai")
 
     # Create two projects
-    await client.post("/api/v1/projects", json={"name": "alpha-project", "description": "Desc alpha"}, headers=auth_header)
-    await client.post("/api/v1/projects", json={"name": "beta-project", "description": "Desc beta"}, headers=auth_header)
+    await client.post(
+        "/api/v1/projects", json={"name": "alpha-project", "description": "Desc alpha"}, headers=auth_header
+    )
+    await client.post(
+        "/api/v1/projects", json={"name": "beta-project", "description": "Desc beta"}, headers=auth_header
+    )
 
     # Search keyword
     res_search = await client.get("/api/v1/projects?q=alpha", headers=auth_header)
@@ -79,19 +75,18 @@ async def test_list_projects_filtering_sorting_search(client: AsyncClient):
     assert data_page["data"]["pagination"]["total_items"] == 2
     assert data_page["data"]["pagination"]["total_pages"] == 2
 
+
 @pytest.mark.anyio
 async def test_update_and_delete_project(client: AsyncClient):
     auth_header = await get_auth_header(client, "edituser", "edituser@cobane.ai")
-    
+
     # Create project
     res_create = await client.post("/api/v1/projects", json={"name": "old-name"}, headers=auth_header)
     project_id = res_create.json()["data"]["id"]
 
     # Update project
     res_update = await client.put(
-        f"/api/v1/projects/{project_id}",
-        json={"name": "new-name", "description": "updated desc"},
-        headers=auth_header
+        f"/api/v1/projects/{project_id}", json={"name": "new-name", "description": "updated desc"}, headers=auth_header
     )
     assert res_update.status_code == 200
     assert res_update.json()["data"]["name"] == "new-name"
@@ -105,6 +100,7 @@ async def test_update_and_delete_project(client: AsyncClient):
     # Verify not found
     res_get = await client.get(f"/api/v1/projects/{project_id}", headers=auth_header)
     assert res_get.status_code == 404
+
 
 @pytest.mark.anyio
 async def test_project_stats_and_language_filter(client: AsyncClient):
@@ -130,7 +126,7 @@ async def test_project_stats_and_language_filter(client: AsyncClient):
             file_size=500,
             language="python",
             sha256_hash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            status="processed"
+            status="processed",
         )
         session.add(uploaded_source)
         await session.commit()

@@ -10,16 +10,10 @@ from app.models.base import Base
 # Setup async file-based SQLite database for testing to ensure multiple connections see the same tables
 TEST_DATABASE_URL = "sqlite+aiosqlite:///test.db"
 
-test_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
+test_engine = create_async_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 
-TestingSessionLocal = async_sessionmaker(
-    bind=test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+TestingSessionLocal = async_sessionmaker(bind=test_engine, class_=AsyncSession, expire_on_commit=False)
+
 
 async def override_get_db():
     async with TestingSessionLocal() as session:
@@ -28,12 +22,15 @@ async def override_get_db():
         finally:
             await session.close()
 
+
 # Apply the dependency override globally to the app to bypass standard PostgreSQL
 app.dependency_overrides[get_db] = override_get_db
+
 
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
 
 @pytest.fixture(autouse=True)
 async def setup_db():
@@ -43,7 +40,7 @@ async def setup_db():
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     # Close engine and delete test.db file
     await test_engine.dispose()
     if os.path.exists("test.db"):
@@ -51,6 +48,7 @@ async def setup_db():
             os.remove("test.db")
         except Exception:  # pylint: disable=broad-exception-caught
             pass
+
 
 @pytest.fixture
 async def client():

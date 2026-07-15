@@ -4,20 +4,15 @@ from tests.conftest import TestingSessionLocal
 from app.models.project import Project, UploadedSource
 from app.models.review import Review
 
-async def get_auth_header_and_project(client: AsyncClient, username="revuser", email="revuser@cobane.ai") -> tuple[dict, int]:
+
+async def get_auth_header_and_project(
+    client: AsyncClient, username="revuser", email="revuser@cobane.ai"
+) -> tuple[dict, int]:
     """Helper registering user, creating a project, and seeding an uploaded source."""
-    reg_payload = {
-        "username": username,
-        "email": email,
-        "password": "Password123",
-        "password_confirm": "Password123"
-    }
+    reg_payload = {"username": username, "email": email, "password": "Password123", "password_confirm": "Password123"}
     await client.post("/api/v1/auth/register", json=reg_payload)
-    
-    login_payload = {
-        "email": email,
-        "password": "Password123"
-    }
+
+    login_payload = {"email": email, "password": "Password123"}
     login_res = await client.post("/api/v1/auth/login", json=login_payload)
     tokens = login_res.json()["data"]
     auth_header = {"Authorization": f"Bearer {tokens['access_token']}"}
@@ -35,12 +30,13 @@ async def get_auth_header_and_project(client: AsyncClient, username="revuser", e
             file_size=1024,
             language="python",
             sha256_hash="f6a9e14498fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            status="processed"
+            status="processed",
         )
         session.add(uploaded_source)
         await session.commit()
 
     return auth_header, project_id
+
 
 @pytest.mark.anyio
 async def test_trigger_and_get_review_workflows(client: AsyncClient):
@@ -68,7 +64,7 @@ async def test_trigger_and_get_review_workflows(client: AsyncClient):
     res_findings = await client.get(f"/api/v1/reviews/{review_id}/findings", headers=auth_header)
     assert res_findings.status_code == 200
     findings = res_findings.json()["data"]
-    assert len(findings) >= 2 # contains pylint and bandit stubs
+    assert len(findings) >= 2  # contains pylint and bandit stubs
     assert findings[0]["provider"] in {"pylint", "bandit", "ai"}
 
     # 4. Retrieve nested review metrics
@@ -84,6 +80,7 @@ async def test_trigger_and_get_review_workflows(client: AsyncClient):
     reports = res_reports.json()["data"]
     assert len(reports) == 1
     assert reports[0]["format"] == "pdf"
+
 
 @pytest.mark.anyio
 async def test_list_and_delete_reviews(client: AsyncClient):
@@ -103,14 +100,14 @@ async def test_list_and_delete_reviews(client: AsyncClient):
     # Filter checks (pylint score, status, language)
     res_filter1 = await client.get(f"/api/v1/reviews?min_score=9.0", headers=auth_header)
     assert len(res_filter1.json()["data"]["items"]) == 1
-    
+
     res_filter2 = await client.get(f"/api/v1/reviews?max_score=5.0", headers=auth_header)
     assert len(res_filter2.json()["data"]["items"]) == 0
 
     # Sorting whitelists validation
     res_sort = await client.get(f"/api/v1/reviews?sort_by=pylint_score&ascending=false", headers=auth_header)
     assert res_sort.status_code == 200
-    
+
     res_invalid_sort = await client.get(f"/api/v1/reviews?sort_by=non_existent_column", headers=auth_header)
     assert res_invalid_sort.status_code == 422
 

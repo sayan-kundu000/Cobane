@@ -1,12 +1,14 @@
 import pytest
 from httpx import AsyncClient
 
+
 async def get_auth_header(client: AsyncClient, username="cfguser", email="cfguser@cobane.ai") -> dict:
     reg_payload = {"username": username, "email": email, "password": "Password123", "password_confirm": "Password123"}
     await client.post("/api/v1/auth/register", json=reg_payload)
     login_res = await client.post("/api/v1/auth/login", json={"email": email, "password": "Password123"})
     tokens = login_res.json()["data"]
     return {"Authorization": f"Bearer {tokens['access_token']}"}
+
 
 @pytest.mark.anyio
 async def test_ai_and_static_analysis_config_endpoints(client: AsyncClient):

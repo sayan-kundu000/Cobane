@@ -11,6 +11,7 @@ from app.services.static_analysis_engine.orchestrator import StaticAnalysisOrche
 from app.services.static_analysis import StaticAnalysisService
 from app.core.exceptions import ValidationException
 
+
 @pytest.fixture
 def temp_stub_file():
     """Generates a temporary python stub script inside the workspace for static analysis testing."""
@@ -27,6 +28,7 @@ def temp_stub_file():
     yield path
     if os.path.exists(path):
         os.remove(path)
+
 
 @pytest.mark.anyio
 async def test_source_code_validation():
@@ -58,6 +60,7 @@ async def test_source_code_validation():
         if os.path.exists(empty_path):
             os.remove(empty_path)
 
+
 @pytest.mark.anyio
 async def test_analyzer_registry():
     assert "pylint" in analyzer_registry.list_registered()
@@ -70,6 +73,7 @@ async def test_analyzer_registry():
     with pytest.raises(KeyError):
         analyzer_registry.get("invalid_analyzer")
 
+
 @pytest.mark.anyio
 async def test_severity_mapping():
     assert SeverityMapper.map_pylint("fatal") == "critical"
@@ -77,11 +81,12 @@ async def test_severity_mapping():
     assert SeverityMapper.map_pylint("warning") == "medium"
     assert SeverityMapper.map_pylint("refactor") == "low"
     assert SeverityMapper.map_pylint("convention") == "info"
-    
+
     assert SeverityMapper.map_bandit("HIGH") == "high"
     assert SeverityMapper.map_bandit("MEDIUM") == "medium"
     assert SeverityMapper.map_bandit("LOW") == "low"
     assert SeverityMapper.map_bandit("UNDEFINED") == "info"
+
 
 @pytest.mark.anyio
 async def test_individual_adapters_execution(temp_stub_file):
@@ -117,6 +122,7 @@ async def test_individual_adapters_execution(temp_stub_file):
     assert metrics.cyclomatic_complexity >= 1
     assert 0.0 <= metrics.maintainability_index <= 100.0
 
+
 @pytest.mark.anyio
 async def test_orchestrator_sync_and_async(temp_stub_file):
     orchestrator = StaticAnalysisOrchestrator()
@@ -132,6 +138,7 @@ async def test_orchestrator_sync_and_async(temp_stub_file):
     assert isinstance(report_async, StaticAnalysisReport)
     assert report_async.metrics.loc == report_sync.metrics.loc
     assert len(report_async.findings) == len(report_sync.findings)
+
 
 @pytest.mark.anyio
 async def test_legacy_service_wrapper(temp_stub_file):

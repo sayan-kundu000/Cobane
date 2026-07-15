@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.anyio
 async def test_auth_and_profile_workflows(client: AsyncClient):
     # 1. Register a new user account
@@ -8,9 +9,9 @@ async def test_auth_and_profile_workflows(client: AsyncClient):
         "username": "testuser",
         "email": "testuser@cobane.ai",
         "password": "Password123",
-        "password_confirm": "Password123"
+        "password_confirm": "Password123",
     }
-    
+
     reg_response = await client.post("/api/v1/auth/register", json=reg_payload)
     assert reg_response.status_code == 201
     reg_data = reg_response.json()
@@ -26,10 +27,7 @@ async def test_auth_and_profile_workflows(client: AsyncClient):
     assert dup_data["error"] == "VALIDATION_ERROR"
 
     # 3. Successful login retrieving access and refresh tokens
-    login_payload = {
-        "email": "testuser@cobane.ai",
-        "password": "Password123"
-    }
+    login_payload = {"email": "testuser@cobane.ai", "password": "Password123"}
     login_response = await client.post("/api/v1/auth/login", json=login_payload)
     assert login_response.status_code == 200
     login_data = login_response.json()
@@ -37,7 +35,7 @@ async def test_auth_and_profile_workflows(client: AsyncClient):
     tokens = login_data["data"]
     assert "access_token" in tokens
     assert "refresh_token" in tokens
-    
+
     access_token = tokens["access_token"]
     auth_header = {"Authorization": f"Bearer {access_token}"}
 
@@ -51,12 +49,9 @@ async def test_auth_and_profile_workflows(client: AsyncClient):
     # 5. Access without headers must fail
     fail_response = await client.get("/api/v1/users/me")
     assert fail_response.status_code == 401
-    
+
     # 6. Update Profile biography details (Protected Route)
-    profile_payload = {
-        "full_name": "Test User Account",
-        "bio": "Software developer testing AI Code Review systems."
-    }
+    profile_payload = {"full_name": "Test User Account", "bio": "Software developer testing AI Code Review systems."}
     prof_response = await client.put("/api/v1/users/me/profile", json=profile_payload, headers=auth_header)
     assert prof_response.status_code == 200
     prof_data = prof_response.json()

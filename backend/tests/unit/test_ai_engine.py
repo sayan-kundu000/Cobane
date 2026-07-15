@@ -14,6 +14,7 @@ from app.services.ai.orchestrator import AIReviewOrchestrator
 from app.services.ai_service import AIService
 from app.core.exceptions import ValidationException
 
+
 @pytest.mark.anyio
 async def test_token_estimation_and_chunking():
     # 1. Test token estimation
@@ -27,6 +28,7 @@ async def test_token_estimation_and_chunking():
     chunks = chunk_code(code_content, max_tokens_per_chunk=30)
     assert len(chunks) > 1
     assert "".join(chunks).replace("\n", "") == code_content.replace("\n", "")
+
 
 @pytest.mark.anyio
 async def test_context_builder_formatting():
@@ -55,6 +57,7 @@ async def test_context_builder_formatting():
     assert "Maintainability Index: 85.50" in formatted_metrics
     assert "Cyclomatic Complexity: 5" in formatted_metrics
 
+
 @pytest.mark.anyio
 async def test_prompt_manager():
     system = PromptManager.get_system_prompt()
@@ -66,6 +69,7 @@ async def test_prompt_manager():
     assert "Static findings context" in user
     assert "x = 1" in user
 
+
 @pytest.mark.anyio
 async def test_ai_models_validation():
     finding_data = {
@@ -76,7 +80,7 @@ async def test_ai_models_validation():
         "recommendation": "Use local variables.",
         "confidence": 0.85,
         "file_reference": "main.py",
-        "line_reference": 5
+        "line_reference": 5,
     }
     finding = AIFinding(**finding_data)
     assert finding.category == "performance"
@@ -91,6 +95,7 @@ async def test_ai_models_validation():
     with pytest.raises(ValueError):
         AIFinding(**finding_data)
 
+
 @pytest.mark.anyio
 async def test_orchestrator_successful_review():
     mock_res = {
@@ -104,20 +109,16 @@ async def test_orchestrator_successful_review():
                 "recommendation": "Add a termination check condition.",
                 "confidence": 0.95,
                 "file_reference": "app.py",
-                "line_reference": 45
+                "line_reference": 45,
             }
-        ]
+        ],
     }
-    
+
     mock_provider = MockAIProvider(response_content=json.dumps(mock_res))
     orchestrator = AIReviewOrchestrator(provider=mock_provider)
 
     result = await orchestrator.conduct_review(
-        filename="app.py",
-        language="python",
-        code_content="while True: pass",
-        findings=[],
-        metrics=None
+        filename="app.py", language="python", code_content="while True: pass", findings=[], metrics=None
     )
 
     assert result.summary == "Mock review completed successfully."
@@ -125,6 +126,7 @@ async def test_orchestrator_successful_review():
     assert result.findings[0].category == "bug"
     assert result.findings[0].severity == "critical"
     assert result.findings[0].line_reference == 45
+
 
 @pytest.mark.anyio
 async def test_orchestrator_retry_on_failure():
@@ -139,18 +141,15 @@ async def test_orchestrator_retry_on_failure():
     try:
         with pytest.raises(ValidationException):
             await orchestrator.conduct_review(
-                filename="fail.py",
-                language="python",
-                code_content="x = 1",
-                findings=[],
-                metrics=None
+                filename="fail.py", language="python", code_content="x = 1", findings=[], metrics=None
             )
-        
+
         assert ai_metrics.total_retries >= 1
         assert mock_provider.calls_count == 2
-        
+
     finally:
         ai_config.retry_count = original_retry_count
+
 
 @pytest.mark.anyio
 async def test_ai_service_integration():
@@ -165,29 +164,25 @@ async def test_ai_service_integration():
                 "recommendation": "myVal = 5 -> my_val = 5",
                 "confidence": 0.8,
                 "file_reference": "helpers.py",
-                "line_reference": 10
+                "line_reference": 10,
             }
-        ]
+        ],
     }
     mock_provider = MockAIProvider(response_content=json.dumps(mock_res))
-    
+
     orchestrator = AIReviewOrchestrator(provider=mock_provider)
-    
+
     ai_service = AIService()
     original_conduct_review = AIReviewOrchestrator.conduct_review
-    
+
     async def mock_conduct_review(*args, **kwargs):
         return AIReviewResult.model_validate(mock_res)
-        
+
     AIReviewOrchestrator.conduct_review = mock_conduct_review
-    
+
     try:
-        results = await ai_service.generate_review(
-            _code_content="myVal = 5",
-            filename="helpers.py",
-            language="python"
-        )
-        
+        results = await ai_service.generate_review(_code_content="myVal = 5", filename="helpers.py", language="python")
+
         assert results["provider"] == "openai"
         assert os.getenv("AI_PROVIDER", settings.AI_PROVIDER) == "openai" or results["provider"] is not None
         assert results["summary"] == "AI Service review completed."
@@ -195,6 +190,6 @@ async def test_ai_service_integration():
         assert results["suggestions"][0]["type"] == "naming"
         assert results["suggestions"][0]["line"] == 10
         assert "myVal = 5" in results["suggestions"][0]["suggestion"]
-        
+
     finally:
         AIReviewOrchestrator.conduct_review = original_conduct_review

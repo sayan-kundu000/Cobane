@@ -36,7 +36,9 @@ class Settings(BaseSettings):
             return "sqlite+aiosqlite:///test.db"
         if isinstance(v, str):
             v = v.strip()
-            if v.startswith("postgresql://"):
+            if v.startswith("postgres://"):
+                v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif v.startswith("postgresql://"):
                 v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
             if "sslmode=" in v:
                 v = v.replace("sslmode=", "ssl=")

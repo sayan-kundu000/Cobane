@@ -4,6 +4,7 @@ from tests.conftest import TestingSessionLocal
 from app.models.project import Project, UploadedSource
 from app.models.review import Review, Report
 
+
 async def seed_report(client: AsyncClient, username="repuser", email="repuser@cobane.ai") -> tuple[dict, int]:
     """Registers user, project, review and seeds a Report record."""
     # Register/Login
@@ -15,10 +16,10 @@ async def seed_report(client: AsyncClient, username="repuser", email="repuser@co
 
     # Create Project & UploadedSource & Review & Report
     async with TestingSessionLocal() as session:
-        proj = Project(name="Report Project", owner_id=1) # owner_id = 1 assuming first registered user is ID 1
+        proj = Project(name="Report Project", owner_id=1)  # owner_id = 1 assuming first registered user is ID 1
         session.add(proj)
         await session.flush()
-        
+
         source = UploadedSource(
             project_id=proj.id,
             filename="rep.py",
@@ -26,7 +27,7 @@ async def seed_report(client: AsyncClient, username="repuser", email="repuser@co
             file_size=10,
             language="python",
             sha256_hash="hash",
-            status="processed"
+            status="processed",
         )
         session.add(source)
         await session.flush()
@@ -38,21 +39,18 @@ async def seed_report(client: AsyncClient, username="repuser", email="repuser@co
             pylint_score=9.0,
             radon_mi_score=95.0,
             bandit_issues_count=0,
-            ai_review_completed=True
+            ai_review_completed=True,
         )
         session.add(review)
         await session.flush()
 
-        report = Report(
-            review_id=review.id,
-            format="pdf",
-            file_path="reports/exports/test-report.pdf"
-        )
+        report = Report(review_id=review.id, format="pdf", file_path="reports/exports/test-report.pdf")
         session.add(report)
         await session.commit()
         report_id = report.id
 
     return auth_header, report_id
+
 
 @pytest.mark.anyio
 async def test_reports_routing_endpoints(client: AsyncClient):
