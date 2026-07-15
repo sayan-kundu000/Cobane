@@ -49,7 +49,7 @@ services:
         fromService:
           type: web
           name: cobane-backend-status
-          property: url
+          property: host
     routes:
       - type: rewrite
         source: /*
