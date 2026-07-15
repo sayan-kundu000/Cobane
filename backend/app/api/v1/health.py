@@ -97,15 +97,46 @@ async def refresh_health_status():
     """Auto-heals the backend connection failures by falling back to SQLite if PostgreSQL fails."""
     app_logger.info("Initiating backend automatic healing process...")
 
+    # Try to reconnect to primary PostgreSQL if currently on SQLite fallback
+    reconnected_to_primary = False
+    if "sqlite" in settings.DATABASE_URL:
+        primary_url = os.getenv("DATABASE_URL")
+        if primary_url:
+            primary_url = primary_url.strip()
+            if primary_url.startswith("postgres://"):
+                primary_url = primary_url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif primary_url.startswith("postgresql://"):
+                primary_url = primary_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            if "sslmode=" in primary_url:
+                primary_url = primary_url.replace("sslmode=", "ssl=")
+            
+            if not primary_url.startswith("sqlite"):
+                app_logger.info("SQLite fallback active. Probing primary database for recovery...")
+                try:
+                    from sqlalchemy.ext.asyncio import create_async_engine
+                    temp_engine = create_async_engine(primary_url)
+                    async with temp_engine.connect() as conn:
+                        await conn.execute(text("SELECT 1"))
+                    await temp_engine.dispose()
+                    
+                    app_logger.info("Primary database recovered! Reconnecting and reinitializing pool...")
+                    db_core.reinitialize_database(primary_url)
+                    reconnected_to_primary = True
+                except Exception as recovery_err:
+                    app_logger.info(f"Primary database is still unreachable: {recovery_err}")
+
     # Try verifying the existing database connection first
     is_already_operational = False
-    try:
-        async with db_core.AsyncSessionLocal() as session:
-            await session.execute(text("SELECT 1"))
+    if reconnected_to_primary:
         is_already_operational = True
-        app_logger.info("Existing database connection is healthy.")
-    except Exception:
-        app_logger.warning("Primary database unreachable. Activating self-healing routine...")
+    else:
+        try:
+            async with db_core.AsyncSessionLocal() as session:
+                await session.execute(text("SELECT 1"))
+            is_already_operational = True
+            app_logger.info("Existing database connection is healthy.")
+        except Exception:
+            app_logger.warning("Primary database unreachable. Activating self-healing routine...")
 
     if not is_already_operational:
         try:
