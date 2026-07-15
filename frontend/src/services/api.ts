@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 let resolvedBaseUrl = '/api/v1';
-if (import.meta.env.VITE_API_URL) {
+if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'undefined' && import.meta.env.VITE_API_URL !== 'null') {
   let url = import.meta.env.VITE_API_URL.trim();
 
   // If the host is Render's internal host name (no dots and not localhost),

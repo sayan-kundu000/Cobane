@@ -17,10 +17,12 @@ def read_backend_logs(limit: int = 35) -> list:
     # Try alternate location if running from parent dir
     if not os.path.exists(log_path):
         log_path = os.path.join("backend", "logs", "app", "app.log")
-    
+
     if not os.path.exists(log_path):
-        return [f"2026-07-14 09:55:00 [INFO] [cobane.logger] Active log stream initialized. Log file not yet populated."]
-        
+        return [
+            f"2026-07-14 09:55:00 [INFO] [cobane.logger] Active log stream initialized. Log file not yet populated."
+        ]
+
     try:
         with open(log_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
@@ -59,18 +61,22 @@ async def get_health_status(db: AsyncSession = Depends(get_db)):
     try:
         # Ping the current database connection
         await db.execute(text("SELECT 1"))
-        
+
         # If connection succeeds, determine if we are in Green or Yellow status
         if "sqlite" in settings.DATABASE_URL:
             # Running on SQLite is fine but counts as fallback/warning state (Yellow)
             status = "yellow"
             message = "There are bugs that can be solved later."
-            app_logger.warning("Running on local SQLite fallback database (test.db). System is functional but using SQLite instead of production PostgreSQL database.")
+            app_logger.warning(
+                "Running on local SQLite fallback database (test.db). System is functional but using SQLite instead of production PostgreSQL database."
+            )
             app_logger.warning("Default config key 'JWT_SECRET_KEY' detected. Consider updating environment vars.")
         else:
             status = "green"
             message = "Everything is fine without bugs."
-            app_logger.info("Active PostgreSQL database connection pool is healthy. Connection verified. System running smoothly with 0 bugs.")
+            app_logger.info(
+                "Active PostgreSQL database connection pool is healthy. Connection verified. System running smoothly with 0 bugs."
+            )
     except Exception as e:
         # Connection failed, system is in critical state (Red)
         status = "red"
@@ -81,22 +87,16 @@ async def get_health_status(db: AsyncSession = Depends(get_db)):
 
     # Combine state logs with actual logs read from backend file
     actual_logs = read_backend_logs()
-    combined_logs = [
-        "------------------ LIVE STREAM LOG BUFFER ------------------"
-    ] + actual_logs
+    combined_logs = ["------------------ LIVE STREAM LOG BUFFER ------------------"] + actual_logs
 
-    return {
-        "status": status,
-        "message": message,
-        "logs": combined_logs
-    }
+    return {"status": status, "message": message, "logs": combined_logs}
 
 
 @router.post("/refresh", response_class=StandardJSONResponse)
 async def refresh_health_status():
     """Auto-heals the backend connection failures by falling back to SQLite if PostgreSQL fails."""
     app_logger.info("Initiating backend automatic healing process...")
-    
+
     # Try verifying the existing database connection first
     is_already_operational = False
     try:
@@ -113,19 +113,21 @@ async def refresh_health_status():
             sqlite_url = "sqlite+aiosqlite:///test.db"
             app_logger.info(f"Switching database URL to: {sqlite_url}")
             db_core.reinitialize_database(sqlite_url)
-            
+
             # Create all database tables
             app_logger.info("Reconstructing database schema and running migrations...")
             from app.models.base import Base
+
             async with db_core.engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
-            
+
             # Seed the database
             app_logger.info("Seeding database values...")
             from app.db.seed import seed_database
+
             async with db_core.AsyncSessionLocal() as session:
                 await seed_database(session)
-                
+
             app_logger.info("Database self-healing: SUCCESS. SQLite fallback activated.")
         except Exception as err:
             app_logger.error(f"Auto-healing refresh failed: {err}")
@@ -144,7 +146,7 @@ async def refresh_health_status():
     try:
         async with db_core.AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
-        
+
         if "sqlite" in settings.DATABASE_URL:
             final_status = "yellow"
             final_message = "There are bugs that can be solved later."
@@ -153,16 +155,6 @@ async def refresh_health_status():
         final_message = "Facing issues and needs assistance."
 
     actual_logs = read_backend_logs()
-    combined_logs = [
-        "------------------ LIVE STREAM LOG BUFFER ------------------"
-    ] + actual_logs
+    combined_logs = ["------------------ LIVE STREAM LOG BUFFER ------------------"] + actual_logs
 
-    return {
-        "status": final_status,
-        "message": final_message,
-        "logs": combined_logs
-    }
-
-
-
-
+    return {"status": final_status, "message": final_message, "logs": combined_logs}

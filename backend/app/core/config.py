@@ -32,8 +32,14 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def parse_database_url(cls, v) -> str:
-        if isinstance(v, str) and v.startswith("postgresql://"):
-            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if not v or (isinstance(v, str) and not v.strip()):
+            return "sqlite+aiosqlite:///test.db"
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("postgresql://"):
+                v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            if "sslmode=" in v:
+                v = v.replace("sslmode=", "ssl=")
         return v
 
     @field_validator("ALLOWED_CORS_ORIGINS", mode="before")
