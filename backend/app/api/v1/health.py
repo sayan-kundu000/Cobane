@@ -122,6 +122,18 @@ async def refresh_health_status():
                     app_logger.info("Primary database recovered! Reconnecting and reinitializing pool...")
                     db_core.reinitialize_database(primary_url)
                     reconnected_to_primary = True
+                    
+                    # Create all database tables on PostgreSQL
+                    app_logger.info("Ensuring schema and tables exist on the primary database...")
+                    from app.models.base import Base
+                    async with db_core.engine.begin() as conn:
+                        await conn.run_sync(Base.metadata.create_all)
+                        
+                    # Seed the database if needed
+                    app_logger.info("Checking database seeding on primary database...")
+                    from app.db.seed import seed_database
+                    async with db_core.AsyncSessionLocal() as session:
+                        await seed_database(session)
                 except Exception as recovery_err:
                     app_logger.info(f"Primary database is still unreachable: {recovery_err}")
 
