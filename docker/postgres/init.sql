@@ -1,1 +1,1 @@
-﻿CREATE DATABASE cobane;
+-- cobane database is initialized by POSTGRES_DB environment variable in docker-compose.yml
