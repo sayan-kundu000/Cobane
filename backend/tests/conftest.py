@@ -10,7 +10,7 @@ from app.core.dependencies import get_db
 from app.models.base import Base
 
 # Setup async file-based SQLite database for testing to ensure multiple connections see the same tables
-TEST_DATABASE_URL = "sqlite+aiosqlite:///test.db"
+TEST_DATABASE_URL = "sqlite+aiosqlite:///test_run.db"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 
@@ -45,9 +45,9 @@ async def setup_db():
 
     # Close engine and delete test.db file
     await test_engine.dispose()
-    if os.path.exists("test.db"):
+    if os.path.exists("test_run.db"):
         try:
-            os.remove("test.db")
+            os.remove("test_run.db")
         except Exception:  # pylint: disable=broad-exception-caught
             pass
 

@@ -49,9 +49,6 @@ async def get_project(
     project_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Retrieves metadata properties for a specific project workspace."""
-    owner_scope = None if current_user.is_superuser else current_user.id
-    project = await ProjectService.get_project(db, project_id, owner_id=current_user.id if owner_scope else 0)
-    # If superuser, retrieve without owner filter:
     if current_user.is_superuser:
         from app.db.repositories.project_repository import ProjectRepository
 
@@ -59,8 +56,9 @@ async def get_project(
         project = await project_repo.get(project_id)
         if not project:
             from app.core.exceptions import NotFoundException
-
             raise NotFoundException(f"Project with ID {project_id} not found.")
+    else:
+        project = await ProjectService.get_project(db, project_id, owner_id=current_user.id)
 
     return ProjectResponse.model_validate(project)
 
