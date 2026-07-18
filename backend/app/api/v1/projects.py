@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.core.dependencies import get_db, get_current_user
@@ -130,3 +130,71 @@ async def get_project_stats(
 
     stats = await ProjectService.get_project_stats(db, project_id, owner_scope)
     return stats
+
+
+@router.post("/{project_id}/upload", response_class=StandardJSONResponse)
+async def upload_project_file(
+    project_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Saves a code snippet or codebase archive and registers it as an UploadedSource."""
+    # Validate project and ownership
+    if not current_user.is_superuser:
+        await ProjectService.get_project(db, project_id, current_user.id)
+    else:
+        from app.db.repositories.project_repository import ProjectRepository
+        project_repo = ProjectRepository(db)
+        project = await project_repo.get(project_id)
+        if not project:
+            from app.core.exceptions import NotFoundException
+            raise NotFoundException(f"Project with ID {project_id} not found.")
+
+    import os
+    import hashlib
+    from app.models.project import UploadedSource
+    from app.utils.path_helpers import ensure_directory_exists
+
+    upload_dir = "uploads/processed"
+    ensure_directory_exists(upload_dir)
+
+    # Calculate filename and save destination
+    safe_filename = f"{project_id}_{file.filename}"
+    file_path = os.path.join(upload_dir, safe_filename)
+
+    # Read content to write to file and compute hash
+    content = await file.read()
+    file_size = len(content)
+    sha256 = hashlib.sha256(content).hexdigest()
+
+    # Save to disk
+    with open(file_path, "wb") as buffer:
+        buffer.write(content)
+
+    # Determine programming language from extension
+    ext = os.path.splitext(file.filename)[1].lower()
+    language = "python" if ext == ".py" else ext.strip(".") or "txt"
+
+    # Create UploadedSource record in database
+    uploaded_source = UploadedSource(
+        project_id=project_id,
+        filename=file.filename,
+        file_path=file_path,
+        file_size=file_size,
+        language=language,
+        sha256_hash=sha256,
+        status="processed"
+    )
+    db.add(uploaded_source)
+    await db.commit()
+    await db.refresh(uploaded_source)
+
+    return {
+        "id": uploaded_source.id,
+        "project_id": uploaded_source.project_id,
+        "filename": uploaded_source.filename,
+        "file_size": uploaded_source.file_size,
+        "language": uploaded_source.language,
+        "status": uploaded_source.status
+    }

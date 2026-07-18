@@ -7,3 +7,84 @@
     @apply transition-colors duration-200;
   }
 }
+
+/* Neon Cyberpunk Theme Styles */
+html.neon body {
+  background-color: #05060b !important;
+  color: #e2e8f0 !important;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Card overrides */
+html.neon .bg-white,
+html.neon .dark\:bg-gray-800,
+html.neon .dark\:bg-gray-900,
+html.neon .bg-gray-50 {
+  background-color: #0b0c16 !important;
+  border: 1px solid #00f2fe !important;
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.15) !important;
+}
+
+/* Text glow */
+html.neon h1,
+html.neon h2,
+html.neon h3,
+html.neon h4,
+html.neon .text-gray-900,
+html.neon .dark\:text-white {
+  color: #00f2fe !important;
+  text-shadow: 0 0 4px rgba(0, 242, 254, 0.4) !important;
+}
+
+/* Neon buttons */
+html.neon .bg-primary-600,
+html.neon .bg-primary-500,
+html.neon .hover\:bg-primary-700:hover {
+  background-color: #ff007f !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.6) !important;
+  border: none !important;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+html.neon .text-primary-600,
+html.neon .dark\:text-primary-400 {
+  color: #ff007f !important;
+  text-shadow: 0 0 4px rgba(255, 0, 127, 0.3) !important;
+}
+
+/* Form inputs */
+html.neon input,
+html.neon textarea,
+html.neon select {
+  background-color: #07080f !important;
+  border: 1px solid #ff007f !important;
+  color: #00f2fe !important;
+  box-shadow: 0 0 5px rgba(255, 0, 127, 0.1) !important;
+}
+
+html.neon input:focus,
+html.neon textarea:focus {
+  border-color: #00f2fe !important;
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.5) !important;
+}
+
+/* Secondary cards / tables / borders */
+html.neon .border-gray-200,
+html.neon .border-gray-250,
+html.neon .dark\:border-gray-700,
+html.neon .dark\:border-gray-700\/80 {
+  border-color: #1a1c35 !important;
+}
+
+html.neon .text-gray-500,
+html.neon .text-gray-550,
+html.neon .text-gray-450 {
+  color: #8b92b6 !important;
+}
+
+html.neon .bg-gray-100,
+html.neon .dark\:bg-gray-950\/20,
+html.neon .bg-gray-50\/10 {
+  background-color: #07080f !important;
+}

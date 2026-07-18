@@ -1,7 +1,18 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth.ts';
+import { useTheme } from '../hooks/useTheme.ts';
 
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth?mode=login');
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
@@ -29,7 +40,20 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b flex items-center justify-between px-6 dark:bg-gray-800 dark:border-gray-700">
           <span className="text-sm font-medium text-gray-500">Status: Ready</span>
-          <button className="text-sm bg-gray-200 px-3 py-1 rounded dark:bg-gray-700">Logout</button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={toggleTheme}
+              className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded-none dark:bg-gray-700 dark:text-white dark:hover:bg-gray-650 transition font-bold uppercase tracking-wider"
+            >
+              {theme === 'light' ? '☀️ Light' : theme === 'dark' ? '🌙 Dark' : '⚡ Neon'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-xs bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-none font-bold uppercase tracking-wider transition"
+            >
+              Logout
+            </button>
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">
           {children}

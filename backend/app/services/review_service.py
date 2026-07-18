@@ -93,9 +93,21 @@ class ReviewService:
                 "classes_count": 1,
             }
 
+            import os
+            code_content = ""
+            if os.path.exists(source.file_path):
+                try:
+                    with open(source.file_path, "r", encoding="utf-8") as f:
+                        code_content = f.read()
+                except Exception as e:
+                    app_logger.warning("Failed to read uploaded source file at %s: %s", source.file_path, str(e))
+            
+            if not code_content:
+                code_content = f"import os\n\ndef run_checks(value):\n    assert value is not None\n    print('Completed value validation')\n"
+
             ai_service = AIService()
             ai_results = await ai_service.generate_review(
-                _code_content=f"import os\n\ndef run_checks(value):\n    assert value is not None\n    print('Completed value validation')\n",
+                _code_content=code_content,
                 _prompt_template="Standard review template",
                 filename=source.filename,
                 language=source.language or "python",

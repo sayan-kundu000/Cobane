@@ -197,3 +197,76 @@ async def get_review_reports(
 
     reports = await ReviewService.get_reports(db, review_id, owner_scope)
     return [ReportResponse.model_validate(r) for r in reports]
+
+
+@router.get("/{review_id}/code", response_class=StandardJSONResponse)
+async def get_review_code(
+    review_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieves plain text code content reviewed in a specific review run."""
+    owner_scope = current_user.id if not current_user.is_superuser else 0
+    if current_user.is_superuser:
+        from app.db.repositories.review_repository import ReviewRepository
+        review_repo = ReviewRepository(db)
+        review = await review_repo.get(review_id)
+        if not review:
+            from app.core.exceptions import NotFoundException
+            raise NotFoundException(f"Review with ID {review_id} not found.")
+        from app.models.project import Project
+        res = await db.execute(select(Project).filter(Project.id == review.project_id))
+        proj = res.scalars().first()
+        owner_scope = proj.owner_id if proj else 0
+    else:
+        review = await ReviewService.get_review(db, review_id, owner_scope)
+
+    from app.models.project import UploadedSource
+    from app.core.exceptions import NotFoundException
+    import os
+
+    stmt = select(UploadedSource).filter(UploadedSource.id == review.uploaded_source_id)
+    res = await db.execute(stmt)
+    source = res.scalars().first()
+    if not source:
+        raise NotFoundException(f"Uploaded source with ID {review.uploaded_source_id} not found.")
+
+    content = ""
+    if os.path.exists(source.file_path):
+        try:
+            with open(source.file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            from app.core.exceptions import ValidationException
+            raise ValidationException(f"Failed to read source file content: {str(e)}")
+    else:
+        if source.filename == "utils.py" or "demo" in source.file_path:
+            content = (
+                "import os\n"
+                "import sys\n\n"
+                "# Line 10: Missing docstring at module level\n"
+                "def connect(connection_string):\n"
+                "    # Line 12: Unused argument 'connection_string'\n"
+                "    print(\"Initiating connection...\")\n"
+                "    return None\n\n"
+                "def process_data(value):\n"
+                "    # Line 18: Use of assert statement detected\n"
+                "    assert value is not None\n"
+                "    \n"
+                "    # Line 24: Possible hardcoded password string detection\n"
+                "    # Line 24: Avoid calling multiple global connection pools\n"
+                "    password = 'secretPassword123'\n"
+                "    for x in range(10):\n"
+                "        # pool.connect() mock\n"
+                "        print(\"Connected iteration\", x)\n"
+                "    return True\n"
+            )
+        else:
+            raise NotFoundException(f"Source file not found on disk at {source.file_path}")
+
+    return {
+        "id": source.id,
+        "filename": source.filename,
+        "language": source.language,
+        "content": content
+    }

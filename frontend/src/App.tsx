@@ -1,59 +1,41 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.tsx';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './context/AuthContext.tsx'; // Wait, it's context/AuthContext.tsx actually, let's keep context/AuthContext.tsx
 import { ThemeProvider } from './context/ThemeContext.tsx';
-import DashboardLayout from './layouts/DashboardLayout.tsx';
-import Dashboard from './pages/Dashboard.tsx';
-import Auth from './pages/Auth.tsx';
-import Projects from './pages/Projects.tsx';
-import Reviews from './pages/Reviews.tsx';
-import BackendStatus from './pages/BackendStatus.tsx';
+import ErrorBoundary from './components/common/ErrorBoundary.tsx';
+import AppRoutes from './routes/AppRoutes.tsx';
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Public route */}
-            <Route path="/auth" element={<Auth />} />
-
-            {/* Console / Dashboard routes */}
-            <Route
-              path="/"
-              element={
-                <DashboardLayout>
-                  <Dashboard />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/projects"
-              element={
-                <DashboardLayout>
-                  <Projects />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/reviews"
-              element={
-                <DashboardLayout>
-                  <Reviews />
-                </DashboardLayout>
-              }
-            />
-            <Route
-              path="/backend-status"
-              element={
-                <DashboardLayout>
-                  <BackendStatus />
-                </DashboardLayout>
-              }
-            />
-          </Routes>
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <Router>
+              <AppRoutes />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  className: 'dark:bg-gray-800 dark:text-white',
+                  duration: 4000,
+                }}
+              />
+            </Router>
+          </AuthProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

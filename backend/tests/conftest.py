@@ -1,5 +1,7 @@
-import pytest
 import os
+os.environ["AI_API_KEY"] = "mock-key"
+
+import pytest
 import httpx
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
