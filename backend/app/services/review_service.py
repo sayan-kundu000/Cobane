@@ -242,6 +242,15 @@ class ReviewService:
         # Verify ownership by trying to retrieve the review
         await review_service.get_review(db, review_id, owner_id)
 
+        # Explicitly delete all child records associated with this review
+        # to ensure no orphaned records remain in SQLite or other databases
+        from app.models.review import ReviewFinding, ReviewMetrics, Report
+        from sqlalchemy import delete
+
+        await db.execute(delete(ReviewFinding).where(ReviewFinding.review_id == review_id))
+        await db.execute(delete(ReviewMetrics).where(ReviewMetrics.review_id == review_id))
+        await db.execute(delete(Report).where(Report.review_id == review_id))
+
         review_repo = ReviewRepository(db)
         success = await review_repo.delete(review_id)
         await db.commit()

@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = "development"
     BACKEND_PORT: int = 8000
-    FRONTEND_PORT: int = 5173
+    FRONTEND_PORT: int = 3000
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

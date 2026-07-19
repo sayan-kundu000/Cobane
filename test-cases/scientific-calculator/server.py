@@ -90,7 +90,7 @@ class CalculatorHandler(SimpleHTTPRequestHandler):
         return SimpleHTTPRequestHandler.do_GET(self)
 
 if __name__ == '__main__':
-    port = 8080
+    port = 8082
     print(f"Starting scientific calculator backend server at http://localhost:{port}")
     # Change working directory to directory containing this script to serve local static files correctly
     script_dir = os.path.dirname(os.path.realpath(__file__))

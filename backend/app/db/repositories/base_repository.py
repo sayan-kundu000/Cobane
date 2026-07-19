@@ -75,6 +75,9 @@ class BaseRepository(Generic[ModelType]):
 
     async def delete(self, id_val: int) -> bool:
         """Removes a model database record by integer ID. Returns success status."""
-        query = delete(self.model).where(self.model.id == id_val)
-        result = await self.db.execute(query)
-        return (result.rowcount or 0) > 0
+        obj = await self.get(id_val)
+        if obj:
+            await self.db.delete(obj)
+            await self.db.flush()
+            return True
+        return False

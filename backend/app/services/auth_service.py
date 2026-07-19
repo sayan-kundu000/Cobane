@@ -43,10 +43,12 @@ class AuthService:
         )
         db.add(user)
         await db.commit()
-        await db.refresh(user)
+        
+        # Load user eagerly with relationships to prevent validation errors in schemas
+        registered_user = await user_repo.get(user.id)
 
         security_logger.info("Successfully registered user account: %s", user.username)
-        return user
+        return registered_user
 
     @staticmethod
     async def authenticate(db: AsyncSession, credentials: LoginRequest) -> Dict[str, str]:
