@@ -64,6 +64,7 @@ async def get_project(
         project = await project_repo.get(project_id)
         if not project:
             from app.core.exceptions import NotFoundException
+
             raise NotFoundException(f"Project with ID {project_id} not found.")
     else:
         project = await ProjectService.get_project(db, project_id, owner_id=current_user.id)
@@ -143,7 +144,7 @@ async def upload_project_file(
     project_id: int,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Saves a code snippet or codebase archive and registers it as an UploadedSource."""
     # Validate project and ownership
@@ -151,10 +152,12 @@ async def upload_project_file(
         await ProjectService.get_project(db, project_id, current_user.id)
     else:
         from app.db.repositories.project_repository import ProjectRepository
+
         project_repo = ProjectRepository(db)
         project = await project_repo.get(project_id)
         if not project:
             from app.core.exceptions import NotFoundException
+
             raise NotFoundException(f"Project with ID {project_id} not found.")
 
     import os
@@ -203,7 +206,7 @@ async def upload_project_file(
         file_size=file_size,
         language=language,
         sha256_hash=sha256,
-        status="processed"
+        status="processed",
     )
     db.add(uploaded_source)
     await db.commit()
@@ -215,7 +218,7 @@ async def upload_project_file(
         "filename": uploaded_source.filename,
         "file_size": uploaded_source.file_size,
         "language": uploaded_source.language,
-        "status": uploaded_source.status
+        "status": uploaded_source.status,
     }
 
 
@@ -230,10 +233,12 @@ async def list_project_sources(
         await ProjectService.get_project(db, project_id, current_user.id)
     else:
         from app.db.repositories.project_repository import ProjectRepository
+
         project_repo = ProjectRepository(db)
         project = await project_repo.get(project_id)
         if not project:
             from app.core.exceptions import NotFoundException
+
             raise NotFoundException(f"Project with ID {project_id} not found.")
 
     from app.models.project import UploadedSource
@@ -245,7 +250,9 @@ async def list_project_sources(
     return list(sources)
 
 
-@router.get("/{project_id}/sources/{source_id}", response_class=StandardJSONResponse, response_model=SourceCodeContentResponse)
+@router.get(
+    "/{project_id}/sources/{source_id}", response_class=StandardJSONResponse, response_model=SourceCodeContentResponse
+)
 async def get_project_source(
     project_id: int,
     source_id: int,
@@ -261,9 +268,7 @@ async def get_project_source(
     from sqlalchemy.future import select
     import os
 
-    stmt = select(UploadedSource).filter(
-        UploadedSource.id == source_id, UploadedSource.project_id == project_id
-    )
+    stmt = select(UploadedSource).filter(UploadedSource.id == source_id, UploadedSource.project_id == project_id)
     res = await db.execute(stmt)
     source = res.scalars().first()
     if not source:
@@ -276,6 +281,7 @@ async def get_project_source(
                 content = f.read()
         except Exception as e:
             from app.core.exceptions import ValidationException
+
             raise ValidationException(f"Failed to read source file: {str(e)}")
     else:
         raise NotFoundException(f"Source file not found on disk at {source.file_path}")
@@ -285,17 +291,20 @@ async def get_project_source(
         "project_id": source.project_id,
         "filename": source.filename,
         "language": source.language,
-        "content": content
+        "content": content,
     }
 
 
 from pydantic import BaseModel
 
+
 class SourceCodeSaveRequest(BaseModel):
     content: str
 
 
-@router.put("/{project_id}/sources/{source_id}", response_class=StandardJSONResponse, response_model=SourceCodeContentResponse)
+@router.put(
+    "/{project_id}/sources/{source_id}", response_class=StandardJSONResponse, response_model=SourceCodeContentResponse
+)
 async def save_project_source(
     project_id: int,
     source_id: int,
@@ -313,9 +322,7 @@ async def save_project_source(
     import os
     import hashlib
 
-    stmt = select(UploadedSource).filter(
-        UploadedSource.id == source_id, UploadedSource.project_id == project_id
-    )
+    stmt = select(UploadedSource).filter(UploadedSource.id == source_id, UploadedSource.project_id == project_id)
     res = await db.execute(stmt)
     source = res.scalars().first()
     if not source:
@@ -333,6 +340,7 @@ async def save_project_source(
         await db.refresh(source)
     except Exception as e:
         from app.core.exceptions import ValidationException
+
         raise ValidationException(f"Failed to save source file changes: {str(e)}")
 
     return {
@@ -340,11 +348,13 @@ async def save_project_source(
         "project_id": source.project_id,
         "filename": source.filename,
         "language": source.language,
-        "content": payload.content
+        "content": payload.content,
     }
 
 
-@router.post("/{project_id}/sources/{source_id}/run", response_class=StandardJSONResponse, response_model=SourceRunResponse)
+@router.post(
+    "/{project_id}/sources/{source_id}/run", response_class=StandardJSONResponse, response_model=SourceRunResponse
+)
 async def run_project_source(
     project_id: int,
     source_id: int,
@@ -362,9 +372,7 @@ async def run_project_source(
     import sys
     import asyncio
 
-    stmt = select(UploadedSource).filter(
-        UploadedSource.id == source_id, UploadedSource.project_id == project_id
-    )
+    stmt = select(UploadedSource).filter(UploadedSource.id == source_id, UploadedSource.project_id == project_id)
     res = await db.execute(stmt)
     source = res.scalars().first()
     if not source:
@@ -385,9 +393,7 @@ async def run_project_source(
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                process.communicate(), timeout=10.0
-            )
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=10.0)
             stdout = stdout_bytes.decode("utf-8", errors="replace")
             stderr = stderr_bytes.decode("utf-8", errors="replace")
             exit_code = process.returncode
@@ -404,11 +410,7 @@ async def run_project_source(
         stderr = f"Failed to launch process: {str(e)}"
         exit_code = -1
 
-    return {
-        "stdout": stdout,
-        "stderr": stderr,
-        "exit_code": exit_code
-    }
+    return {"stdout": stdout, "stderr": stderr, "exit_code": exit_code}
 
 
 @router.delete("/{project_id}/sources/{source_id}", response_class=StandardJSONResponse)
@@ -427,9 +429,7 @@ async def delete_project_source(
     from sqlalchemy.future import select
     import os
 
-    stmt = select(UploadedSource).filter(
-        UploadedSource.id == source_id, UploadedSource.project_id == project_id
-    )
+    stmt = select(UploadedSource).filter(UploadedSource.id == source_id, UploadedSource.project_id == project_id)
     res = await db.execute(stmt)
     source = res.scalars().first()
     if not source:
@@ -446,5 +446,3 @@ async def delete_project_source(
     await db.commit()
 
     return {"message": "Source file successfully deleted."}
-
-

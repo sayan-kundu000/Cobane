@@ -201,20 +201,21 @@ async def get_review_reports(
 
 @router.get("/{review_id}/code", response_class=StandardJSONResponse)
 async def get_review_code(
-    review_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    review_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Retrieves plain text code content reviewed in a specific review run."""
     owner_scope = current_user.id if not current_user.is_superuser else 0
     if current_user.is_superuser:
         from app.db.repositories.review_repository import ReviewRepository
+
         review_repo = ReviewRepository(db)
         review = await review_repo.get(review_id)
         if not review:
             from app.core.exceptions import NotFoundException
+
             raise NotFoundException(f"Review with ID {review_id} not found.")
         from app.models.project import Project
+
         res = await db.execute(select(Project).filter(Project.id == review.project_id))
         proj = res.scalars().first()
         owner_scope = proj.owner_id if proj else 0
@@ -238,13 +239,9 @@ async def get_review_code(
                 content = f.read()
         except Exception as e:
             from app.core.exceptions import ValidationException
+
             raise ValidationException(f"Failed to read source file content: {str(e)}")
     else:
         raise NotFoundException(f"Source file not found on disk at {source.file_path}")
 
-    return {
-        "id": source.id,
-        "filename": source.filename,
-        "language": source.language,
-        "content": content
-    }
+    return {"id": source.id, "filename": source.filename, "language": source.language, "content": content}

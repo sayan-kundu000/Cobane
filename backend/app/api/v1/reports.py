@@ -56,7 +56,7 @@ async def download_report_file(
     report_id: int,
     current_user: User = Depends(get_current_user),
     token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Downloads the physical report document. Stub returns metadata download endpoint references."""
     # Run the same auth validation check:
@@ -70,11 +70,7 @@ async def download_report_file(
 
 
 @router.get("/{report_id}/download/stream")
-async def download_report_file_stream(
-    report_id: int,
-    token: str,
-    db: AsyncSession = Depends(get_db)
-):
+async def download_report_file_stream(report_id: int, token: str, db: AsyncSession = Depends(get_db)):
     """Streams the physical report file, generating it on the fly if not present."""
     from app.core.security import decode_token
     from app.db.repositories.user_repository import UserRepository
@@ -126,15 +122,17 @@ async def download_report_file_stream(
     # 5. Generate a placeholder PDF file if not exists
     if not os.path.exists(abs_path):
         os.makedirs(os.path.dirname(abs_path), exist_ok=True)
-        
+
         # Load review details and findings to present inside the report PDF
         stmt_findings = select(ReviewFinding).filter(ReviewFinding.review_id == report.review_id)
         res_findings = await db.execute(stmt_findings)
         findings = res_findings.scalars().all()
-        
+
         findings_text = ""
         for idx, f in enumerate(findings, 1):
-            findings_text += f"({idx}) Line {f.line_number}: [{f.category.upper()}] {f.message} -> Suggestion: {f.suggestion}\n"
+            findings_text += (
+                f"({idx}) Line {f.line_number}: [{f.category.upper()}] {f.message} -> Suggestion: {f.suggestion}\n"
+            )
 
         pdf_title = f"Cobane Code Review Audit Summary - Review #{report.review_id}"
         pdf_content = (
@@ -155,14 +153,14 @@ async def download_report_file_stream(
             f"BT /F1 12 Tf 50 750 Td (Generated automatically by Cobane AI Code Review Assistant) Tj ET\n"
             f"BT /F1 10 Tf 50 720 Td (Detected Findings & Recommendations:) Tj ET\n"
         )
-        
+
         y_pos = 690
         for line in findings_text.split("\n"):
             if not line.strip():
                 continue
             escaped_line = line.replace("(", "\\(").replace(")", "\\)")
             # PDF text wrap or truncate for display simplicity
-            chunks = [escaped_line[i:i+85] for i in range(0, len(escaped_line), 85)]
+            chunks = [escaped_line[i : i + 85] for i in range(0, len(escaped_line), 85)]
             for chunk in chunks:
                 pdf_content += f"BT /F1 9 Tf 50 {y_pos} Td ({chunk}) Tj ET\n"
                 y_pos -= 15
@@ -170,7 +168,7 @@ async def download_report_file_stream(
                     break
             if y_pos < 50:
                 break
-                
+
         pdf_content += (
             f"endstream\n"
             f"endobj\n"
@@ -183,13 +181,9 @@ async def download_report_file_stream(
             f"300\n"
             f"%%EOF"
         )
-        
+
         pdf_bytes = pdf_content.encode("utf-8")
         with open(abs_path, "wb") as f:
             f.write(pdf_bytes)
 
-    return FileResponse(
-        path=abs_path,
-        media_type="application/pdf",
-        filename=os.path.basename(abs_path)
-    )
+    return FileResponse(path=abs_path, media_type="application/pdf", filename=os.path.basename(abs_path))

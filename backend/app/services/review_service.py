@@ -94,6 +94,7 @@ class ReviewService:
             }
 
             import os
+
             code_content = ""
             if os.path.exists(source.file_path):
                 try:
@@ -101,7 +102,7 @@ class ReviewService:
                         code_content = f.read()
                 except Exception as e:
                     app_logger.warning("Failed to read uploaded source file at %s: %s", source.file_path, str(e))
-            
+
             if not code_content:
                 code_content = f"import os\n\ndef run_checks(value):\n    assert value is not None\n    print('Completed value validation')\n"
 

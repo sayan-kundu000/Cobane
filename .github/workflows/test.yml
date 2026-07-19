@@ -43,13 +43,14 @@ jobs:
           pip install -r backend/requirements.txt pytest pytest-asyncio pytest-cov httpx
 
       - name: Execute Pytest Suite
-        cwd: ./backend
+        working-directory: ./backend
         env:
           DATABASE_URL: sqlite+aiosqlite:///:memory:
           JWT_SECRET_KEY: test-secret-key-must-be-long-enough-32-characters
           JWT_REFRESH_SECRET_KEY: test-refresh-secret-key-must-be-long-enough-32
           AI_PROVIDER: mock
-          AI_PROVIDER_API_KEY: mock-key
+          AI_API_KEY: mock-key
+          SKIP_DB_REACHABILITY_CHECK: "1"
         run: |
           python -m pytest --cov=app tests/ --cov-report=xml
 

@@ -66,9 +66,7 @@ class ChatRequest(BaseModel):
 
 @router.post("/chat", response_class=StandardJSONResponse)
 async def chat_about_code(
-    payload: ChatRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    payload: ChatRequest, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Answers chatbot inquiries about loaded projects or specific code review details."""
     project_id = payload.project_id
@@ -95,7 +93,9 @@ async def chat_about_code(
             if findings:
                 findings_list = []
                 for f in findings:
-                    findings_list.append(f"- Line {f.line_number} [{f.severity.upper()}]: {f.message} (Category: {f.category})")
+                    findings_list.append(
+                        f"- Line {f.line_number} [{f.severity.upper()}]: {f.message} (Category: {f.category})"
+                    )
                 findings_context = "\nStatic Analysis Findings:\n" + "\n".join(findings_list)
     else:
         if review_id:
@@ -104,16 +104,18 @@ async def chat_about_code(
             review = res.scalars().first()
             if not review:
                 from app.core.exceptions import NotFoundException
+
                 raise NotFoundException(f"Review run #{review_id} not found.")
-            
+
             project_id = review.project_id
-            
+
             # Load source file content
             stmt_src = select(UploadedSource).filter(UploadedSource.id == review.uploaded_source_id)
             res_src = await db.execute(stmt_src)
             source = res_src.scalars().first()
             if source:
                 import os
+
                 if os.path.exists(source.file_path):
                     try:
                         with open(source.file_path, "r", encoding="utf-8") as f:
@@ -129,12 +131,17 @@ async def chat_about_code(
             if findings:
                 findings_list = []
                 for f in findings:
-                    findings_list.append(f"- Line {f.line_number} [{f.severity.upper()}]: {f.message} (Category: {f.category})")
+                    findings_list.append(
+                        f"- Line {f.line_number} [{f.severity.upper()}]: {f.message} (Category: {f.category})"
+                    )
                 findings_context = "\nStatic Analysis Findings:\n" + "\n".join(findings_list)
-                
+
         elif project_id:
             from sqlalchemy import desc
-            stmt_latest_review = select(Review).filter(Review.project_id == project_id).order_by(desc(Review.id)).limit(1)
+
+            stmt_latest_review = (
+                select(Review).filter(Review.project_id == project_id).order_by(desc(Review.id)).limit(1)
+            )
             res_latest_review = await db.execute(stmt_latest_review)
             latest_review = res_latest_review.scalars().first()
             if latest_review:
@@ -144,14 +151,19 @@ async def chat_about_code(
                 if findings:
                     findings_list = []
                     for f in findings:
-                        findings_list.append(f"- Line {f.line_number} [{f.severity.upper()}]: {f.message} (Category: {f.category})")
+                        findings_list.append(
+                            f"- Line {f.line_number} [{f.severity.upper()}]: {f.message} (Category: {f.category})"
+                        )
                     findings_context = "\nStatic Analysis Findings:\n" + "\n".join(findings_list)
 
-            stmt_src = select(UploadedSource).filter(UploadedSource.project_id == project_id, UploadedSource.status == "processed")
+            stmt_src = select(UploadedSource).filter(
+                UploadedSource.project_id == project_id, UploadedSource.status == "processed"
+            )
             res_src = await db.execute(stmt_src)
             sources = res_src.scalars().all()
             code_blocks = []
             import os
+
             for source in sources:
                 if os.path.exists(source.file_path):
                     try:
@@ -193,8 +205,8 @@ async def chat_about_code(
 
     # 3. Call AI provider
     is_mock = (
-        not settings.AI_API_KEY 
-        or "mock" in settings.AI_API_KEY.lower() 
+        not settings.AI_API_KEY
+        or "mock" in settings.AI_API_KEY.lower()
         or settings.AI_API_KEY == "openai-api-key"
         or "replace_with" in settings.AI_API_KEY
     )
@@ -204,10 +216,7 @@ async def chat_about_code(
     if not is_mock:
         try:
             url = f"{settings.AI_BASE_URL.rstrip('/')}/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {settings.AI_API_KEY}",
-                "Content-Type": "application/json"
-            }
+            headers = {"Authorization": f"Bearer {settings.AI_API_KEY}", "Content-Type": "application/json"}
             messages = [{"role": "system", "content": system_prompt}]
             for msg in chat_history:
                 messages.append({"role": msg.role, "content": msg.content})
@@ -217,7 +226,7 @@ async def chat_about_code(
                 "model": settings.AI_MODEL if hasattr(settings, "AI_MODEL") else "gpt-4o",
                 "messages": messages,
                 "temperature": 0.5,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             }
 
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -232,8 +241,7 @@ async def chat_about_code(
     if not response_content:
         # Fetch file names to describe structure
         stmt_srcs = select(UploadedSource).filter(
-            UploadedSource.project_id == project_id, 
-            UploadedSource.status == "processed"
+            UploadedSource.project_id == project_id, UploadedSource.status == "processed"
         )
         res_srcs = await db.execute(stmt_srcs)
         sources_list = res_srcs.scalars().all()
@@ -241,16 +249,28 @@ async def chat_about_code(
         files_desc = ", ".join([f"`{name}`" for name in filenames]) if filenames else "source files"
 
         msg_lower = user_message.lower()
-        lines_desc = f"lines {payload.selection_start_line}-{payload.selection_end_line}" if payload.selection_start_line else "the selected code block"
+        lines_desc = (
+            f"lines {payload.selection_start_line}-{payload.selection_end_line}"
+            if payload.selection_start_line
+            else "the selected code block"
+        )
 
-        if selected_code and ("explain" in msg_lower or "what" in msg_lower or "do" in msg_lower or "purpose" in msg_lower):
+        if selected_code and (
+            "explain" in msg_lower or "what" in msg_lower or "do" in msg_lower or "purpose" in msg_lower
+        ):
             response_content = (
                 f"Here is an explanation of your selected code in `{filename or 'source file'}` ({lines_desc}):\n\n"
                 "1. This snippet defines operations within the application core logic.\n"
                 "2. It runs synchronously or asynchronously as needed by the workspace context.\n\n"
                 f"Selection detail:\n```python\n{selected_code}\n```"
             )
-        elif selected_code and ("refactor" in msg_lower or "clean" in msg_lower or "rewrite" in msg_lower or "fix" in msg_lower or "optimize" in msg_lower):
+        elif selected_code and (
+            "refactor" in msg_lower
+            or "clean" in msg_lower
+            or "rewrite" in msg_lower
+            or "fix" in msg_lower
+            or "optimize" in msg_lower
+        ):
             refactored_code = f"# Optimized / Refactored version\n{selected_code}"
             if "def " in selected_code:
                 lines = selected_code.split("\n")
@@ -260,10 +280,13 @@ async def chat_about_code(
                     new_lines.append(line)
                     if "def " in line and not added_docstring:
                         indent = len(line) - len(line.lstrip())
-                        new_lines.append(" " * (indent + 4) + '"""Refactored: added docstring and basic performance optimizations."""')
+                        new_lines.append(
+                            " " * (indent + 4)
+                            + '"""Refactored: added docstring and basic performance optimizations."""'
+                        )
                         added_docstring = True
                 refactored_code = "\n".join(new_lines)
-            
+
             response_content = (
                 f"I have reviewed the selection in `{filename or 'source file'}` ({lines_desc}). Here is a recommended refactored and optimized version:\n\n"
                 f"```python\n{refactored_code}\n```\n\n"
@@ -297,10 +320,20 @@ async def chat_about_code(
                     f"Based on the static analysis scan of the project `{project_name}`, there are no critical vulnerabilities or findings detected in {files_desc}.\n\n"
                     "If you introduce hardcoded credentials or insecure calls, static checkers like Bandit will highlight them."
                 )
-        elif "refactor" in msg_lower or "clean" in msg_lower or "rewrite" in msg_lower or "fix" in msg_lower or "optimize" in msg_lower:
-            refactor_findings = [f for f in findings if f.category in ["refactor", "style", "complexity", "naming", "performance"]]
+        elif (
+            "refactor" in msg_lower
+            or "clean" in msg_lower
+            or "rewrite" in msg_lower
+            or "fix" in msg_lower
+            or "optimize" in msg_lower
+        ):
+            refactor_findings = [
+                f for f in findings if f.category in ["refactor", "style", "complexity", "naming", "performance"]
+            ]
             if refactor_findings:
-                response_content = f"Here are the refactoring and optimization recommendations for project `{project_name}`:\n\n"
+                response_content = (
+                    f"Here are the refactoring and optimization recommendations for project `{project_name}`:\n\n"
+                )
                 for idx, f in enumerate(refactor_findings, 1):
                     response_content += f"{idx}. **Line {f.line_number}** ({f.file_path}) - [{f.category.upper()}]:\n"
                     response_content += f"   - **Issue**: {f.message}\n"
@@ -336,4 +369,3 @@ async def chat_about_code(
             )
 
     return {"response": response_content}
-

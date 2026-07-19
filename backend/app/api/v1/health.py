@@ -109,29 +109,32 @@ async def refresh_health_status():
                 primary_url = primary_url.replace("postgresql://", "postgresql+asyncpg://", 1)
             if "sslmode=" in primary_url:
                 primary_url = primary_url.replace("sslmode=", "ssl=")
-            
+
             if not primary_url.startswith("sqlite"):
                 app_logger.info("SQLite fallback active. Probing primary database for recovery...")
                 try:
                     from sqlalchemy.ext.asyncio import create_async_engine
+
                     temp_engine = create_async_engine(primary_url)
                     async with temp_engine.connect() as conn:
                         await conn.execute(text("SELECT 1"))
                     await temp_engine.dispose()
-                    
+
                     app_logger.info("Primary database recovered! Reconnecting and reinitializing pool...")
                     db_core.reinitialize_database(primary_url)
                     reconnected_to_primary = True
-                    
+
                     # Create all database tables on PostgreSQL
                     app_logger.info("Ensuring schema and tables exist on the primary database...")
                     from app.models.base import Base
+
                     async with db_core.engine.begin() as conn:
                         await conn.run_sync(Base.metadata.create_all)
-                        
+
                     # Seed the database if needed
                     app_logger.info("Checking database seeding on primary database...")
                     from app.db.seed import seed_database
+
                     async with db_core.AsyncSessionLocal() as session:
                         await seed_database(session)
                 except Exception as recovery_err:
