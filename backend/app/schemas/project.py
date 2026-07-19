@@ -30,3 +30,32 @@ class ProjectStatsResponse(BaseModel):
     total_reviews_conducted: int = Field(..., description="Total reviews run on this project")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+from datetime import datetime
+
+class UploadedSourceResponse(BaseModel):
+    id: int
+    project_id: int
+    filename: str
+    file_size: int
+    language: str
+    status: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SourceCodeContentResponse(BaseModel):
+    id: int
+    project_id: int
+    filename: str
+    language: str
+    content: str
+
+
+class SourceRunResponse(BaseModel):
+    stdout: str
+    stderr: str
+    exit_code: int
+

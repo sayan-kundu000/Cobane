@@ -1,0 +1,33 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1499 >>
+stream
+BT /F1 24 Tf 50 800 Td (Cobane Code Review Audit Summary - Review #4) Tj ET
+BT /F1 12 Tf 50 750 Td (Generated automatically by Cobane AI Code Review Assistant) Tj ET
+BT /F1 10 Tf 50 720 Td (Detected Findings & Recommendations:) Tj ET
+BT /F1 9 Tf 50 690 Td (\(1\) Line 10: [STYLE] Missing docstring at module level \(missing-docstring\). -> Su) Tj ET
+BT /F1 9 Tf 50 675 Td (ggestion: Add descriptive module-level docstrings at the beginning of files.) Tj ET
+BT /F1 9 Tf 50 660 Td (\(2\) Line 18: [SECURITY] Use of assert statement detected \(bandit B101 warning\). -) Tj ET
+BT /F1 9 Tf 50 645 Td (> Suggestion: Avoid using asserts in production context; raise clean runtime exceptio) Tj ET
+BT /F1 9 Tf 50 630 Td (ns.) Tj ET
+BT /F1 9 Tf 50 615 Td (\(3\) Line 10: [NAMING] Variables named x or y do not convey semantic naming meanings) Tj ET
+BT /F1 9 Tf 50 600 Td (. -> Suggestion: x = 42 -> total_count = 42) Tj ET
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f 
+trailer
+<< /Size 5 /Root 1 0 R >>
+startxref
+300
+%%EOF

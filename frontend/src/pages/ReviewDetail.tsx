@@ -16,6 +16,8 @@ export const ReviewDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const reviewId = parseInt(id || '0');
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const [selectedText, setSelectedText] = useState<string>('');
+  const [selectedRange, setSelectedRange] = useState<{ startLine: number; endLine: number } | null>(null);
   const [severityFilter, setSeverityFilter] = useState<FilterSeverity>('all');
   const [activePanel, setActivePanel] = useState<'findings' | 'metrics' | 'reports' | 'chat'>('findings');
 
@@ -143,12 +145,22 @@ export const ReviewDetail: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 border border-gray-250 dark:border-gray-700/80 rounded-2xl p-4 shadow-sm space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-gray-400 uppercase font-mono">
-                Code View: {codeData?.filename || 'utils.py'}
+                Code View: {codeData?.filename || 'source_code'}
               </span>
               <span className="text-xs text-gray-555 dark:text-gray-400 font-medium">Read-Only review mode</span>
             </div>
             <div className="h-[550px]">
-              <MonacoWrapper code={codeData?.content || ''} language={codeData?.language || 'python'} readOnly />
+              <MonacoWrapper
+                code={codeData?.content || ''}
+                language={codeData?.language || 'python'}
+                readOnly
+                selectedLine={selectedLine}
+                findings={findings}
+                onSelectionChange={(text, startLine, endLine) => {
+                  setSelectedText(text);
+                  setSelectedRange(startLine > 0 ? { startLine, endLine } : null);
+                }}
+              />
             </div>
           </div>
         </div>
@@ -282,7 +294,15 @@ export const ReviewDetail: React.FC = () => {
           )}
 
           {activePanel === 'chat' && (
-            <Chatbot reviewId={reviewId} />
+            <Chatbot
+              reviewId={reviewId}
+              selectedCode={selectedText}
+              selectionStartLine={selectedRange?.startLine}
+              selectionEndLine={selectedRange?.endLine}
+              editorCode={codeData?.content || ''}
+              filename={codeData?.filename || ''}
+              isReadOnly={true}
+            />
           )}
 
           {activePanel === 'metrics' && (

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumSudoku - Logical Matrix Solver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glows">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <div class="sudoku-container">
+        <header class="sudoku-header">
+            <div class="brand">
+                <span class="icon">⊞</span>
+                <h1>QuantumSudoku</h1>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span id="connection-status">Connecting Backend...</span>
+            </div>
+        </header>
+
+        <main class="sudoku-layout">
+            <!-- Left Side: Controls -->
+            <section class="controls-panel">
+                <div class="panel-section">
+                    <h2>Game Controls</h2>
+                    <div class="difficulty-selector">
+                        <button class="btn btn-diff active" data-difficulty="easy" onclick="selectDifficulty('easy')">Easy</button>
+                        <button class="btn btn-diff" data-difficulty="medium" onclick="selectDifficulty('medium')">Medium</button>
+                        <button class="btn btn-diff" data-difficulty="hard" onclick="selectDifficulty('hard')">Hard</button>
+                    </div>
+                    <button class="btn btn-action primary" onclick="generateBoard()">Generate Puzzle</button>
+                </div>
+
+                <div class="panel-section">
+                    <h2>Solver Actions</h2>
+                    <div class="action-grid">
+                        <button class="btn btn-sci" onclick="validateBoard()">Validate Board</button>
+                        <button class="btn btn-sci" onclick="solveBoard()">Solve Puzzle</button>
+                        <button class="btn btn-action danger" onclick="clearBoard()">Reset Board</button>
+                    </div>
+                </div>
+
+                <div class="panel-section status-section">
+                    <h2>Status Console</h2>
+                    <div id="status-message" class="status-log">Welcome! Select difficulty and generate a new Sudoku puzzle matrix.</div>
+                </div>
+            </section>
+
+            <!-- Right Side: 9x9 Board -->
+            <section class="board-container">
+                <div class="sudoku-grid" id="grid">
+                    <!-- Javascript generates 81 cells here -->
+                </div>
+            </section>
+        </main>
+        
+        <footer class="sudoku-footer">
+            <p>Powered by Python Backtracking Algorithm & FastAPI Proxy</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

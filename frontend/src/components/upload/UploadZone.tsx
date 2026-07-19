@@ -25,8 +25,13 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ projectId, onUploadSucce
 
   const validateAndUpload = async (file: File) => {
     // Basic validation
-    const allowedExtensions = ['.py', '.zip', '.txt', '.js', '.ts', '.tsx', '.jsx', '.json'];
-    const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    const allowedExtensions = [
+      '.py', '.pyw', '.ipynb', '.csv', '.json', '.cs', '.cpp', '.hpp', '.h',
+      '.sql', '.ddl', '.sqlproj', '.html', '.css', '.js', '.ts', '.tsx', '.jsx',
+      '.zip', '.txt'
+    ];
+    const lastDotIndex = file.name.lastIndexOf('.');
+    const extension = lastDotIndex !== -1 ? file.name.substring(lastDotIndex).toLowerCase() : '';
     
     if (!allowedExtensions.includes(extension)) {
       toast.error(`Invalid file format: ${file.name}. Supported formats: ${allowedExtensions.join(', ')}`);
@@ -114,7 +119,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ projectId, onUploadSucce
           ref={fileInputRef}
           onChange={handleFileInput}
           className="hidden"
-          accept=".py,.zip,.txt,.js,.ts,.tsx,.jsx,.json"
+          accept=".py,.pyw,.ipynb,.csv,.json,.cs,.cpp,.hpp,.h,.sql,.ddl,.sqlproj,.html,.css,.js,.ts,.tsx,.jsx,.zip,.txt"
         />
 
         {uploading ? (
@@ -147,7 +152,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ projectId, onUploadSucce
                 Drag and drop your code files or click to browse
               </p>
               <p className="text-xs text-gray-550 dark:text-gray-400 mt-1">
-                Supports single scripts (.py, .js, .ts) or compressed project archives (.zip) up to 10MB
+                Supports code/script files (.py, .js, .cpp, .html, .sql, etc.) or compressed archives (.zip) up to 10MB
               </p>
             </div>
           </div>

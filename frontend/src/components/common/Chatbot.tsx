@@ -6,6 +6,13 @@ import toast from 'react-hot-toast';
 interface ChatbotProps {
   projectId?: number;
   reviewId?: number;
+  selectedCode?: string;
+  selectionStartLine?: number;
+  selectionEndLine?: number;
+  editorCode?: string;
+  filename?: string;
+  onApplyCode?: (code: string, mode: 'replace' | 'insert' | 'selection') => void;
+  isReadOnly?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -15,7 +22,17 @@ const SUGGESTIONS = [
   'Recommend refactoring changes'
 ];
 
-export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
+export const Chatbot: React.FC<ChatbotProps> = ({
+  projectId,
+  reviewId,
+  selectedCode = '',
+  selectionStartLine,
+  selectionEndLine,
+  editorCode = '',
+  filename = '',
+  onApplyCode,
+  isReadOnly = true
+}) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +69,12 @@ export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
         review_id: reviewId,
         message: text,
         // Exclude first welcome message from API history
-        history: updatedHistory.slice(1, -1)
+        history: updatedHistory.slice(1, -1),
+        selected_code: selectedCode || undefined,
+        editor_code: editorCode || undefined,
+        filename: filename || undefined,
+        selection_start_line: selectionStartLine || undefined,
+        selection_end_line: selectionEndLine || undefined
       };
 
       const response = await sendChatMessage(payload);
@@ -75,6 +97,82 @@ export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
     if (e.key === 'Enter') {
       handleSendMessage(inputValue);
     }
+  };
+
+  // Custom Markdown parser for assistant code blocks
+  const renderMessageContent = (content: string, isUser: boolean) => {
+    if (isUser) {
+      return <span className="whitespace-pre-wrap">{content}</span>;
+    }
+
+    const parts = content.split(/(```[\s\S]*?```)/g);
+
+    return parts.map((part, index) => {
+      if (part.startsWith('```')) {
+        const match = part.match(/```(\w*)\n([\s\S]*?)```/);
+        const lang = match ? match[1] : '';
+        const code = match ? match[2].trim() : part.slice(3, -3).trim();
+
+        return (
+          <div key={index} className="my-3 border border-gray-200 dark:border-gray-700/80 rounded-xl overflow-hidden shadow-xs bg-gray-950 text-gray-100 font-mono text-xs w-full max-w-full">
+            <div className="flex justify-between items-center px-4 py-2 bg-gray-900 border-b border-gray-800 text-[10px] uppercase font-bold tracking-wider text-gray-400 select-none">
+              <span>{lang || 'code'}</span>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(code);
+                    toast.success('Code copied to clipboard!');
+                  }}
+                  className="hover:text-white transition-colors flex items-center space-x-1"
+                  title="Copy Code"
+                >
+                  <span>📋</span>
+                  <span>Copy</span>
+                </button>
+                {onApplyCode && !isReadOnly && (
+                  <div className="relative group inline-block">
+                    <button
+                      className="text-primary-400 hover:text-primary-300 font-bold flex items-center space-x-0.5"
+                      title="Apply suggestions options"
+                    >
+                      <span>🚀</span>
+                      <span>Apply</span>
+                      <span className="text-[8px] ml-0.5">▼</span>
+                    </button>
+                    {/* Hover dropdown options */}
+                    <div className="absolute right-0 bottom-full mb-1 w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50 hidden group-hover:block text-left">
+                      {selectedCode && (
+                        <button
+                          onClick={() => onApplyCode(code, 'selection')}
+                          className="w-full text-left px-3 py-1.5 text-[11px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 font-sans"
+                        >
+                          Replace Selection
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onApplyCode(code, 'insert')}
+                        className="w-full text-left px-3 py-1.5 text-[11px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 font-sans"
+                      >
+                        Insert at Cursor
+                      </button>
+                      <button
+                        onClick={() => onApplyCode(code, 'replace')}
+                        className="w-full text-left px-3 py-1.5 text-[11px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 font-sans font-semibold border-t border-gray-100 dark:border-gray-700"
+                      >
+                        Overwrite File
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <pre className="p-3.5 overflow-x-auto whitespace-pre scrolling-touch max-w-full text-left">{code}</pre>
+          </div>
+        );
+      } else {
+        return <span key={index} className="whitespace-pre-wrap">{part}</span>;
+      }
+    });
   };
 
   return (
@@ -116,13 +214,13 @@ export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
 
               {/* Message bubble */}
               <div
-                className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed shadow-xs whitespace-pre-wrap ${
+                className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed shadow-xs ${
                   isUser
                     ? 'bg-primary-600 text-white rounded-tr-none'
-                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200/60 dark:border-gray-750 rounded-tl-none'
+                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200/60 dark:border-gray-750 rounded-tl-none w-full max-w-full'
                 }`}
               >
-                {msg.content}
+                {renderMessageContent(msg.content, isUser)}
               </div>
             </div>
           );
@@ -144,7 +242,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
       </div>
 
       {/* Suggestion Chips */}
-      {messages.length === 1 && !isLoading && (
+      {messages.length === 1 && !isLoading && !selectedCode && (
         <div className="px-4 py-2 flex flex-wrap gap-2 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-200/55 dark:border-gray-800/40">
           {SUGGESTIONS.map((sug, i) => (
             <button
@@ -158,6 +256,47 @@ export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
         </div>
       )}
 
+      {/* Selection bar banner */}
+      {selectedCode && (
+        <div className="px-4 py-2 bg-primary-50/50 dark:bg-primary-950/20 border-t border-gray-200/50 dark:border-gray-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center space-x-1.5 text-primary-700 dark:text-primary-400 font-medium select-none">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse"></span>
+            <span>Selection Active:</span>
+            <span className="font-mono bg-primary-100/60 dark:bg-primary-900/60 px-1 py-0.5 rounded text-[10px]">
+              Lines {selectionStartLine}-{selectionEndLine}
+            </span>
+          </div>
+          <div className="flex items-center space-x-2.5">
+            <button
+              onClick={() => {
+                handleSendMessage(`Explain this code block:\n\`\`\`python\n${selectedCode}\n\`\`\``);
+              }}
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-bold transition"
+            >
+              Explain 📚
+            </button>
+            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <button
+              onClick={() => {
+                handleSendMessage(`Optimize this code selection:\n\`\`\`python\n${selectedCode}\n\`\`\``);
+              }}
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-bold transition"
+            >
+              Optimize ⚡
+            </button>
+            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <button
+              onClick={() => {
+                handleSendMessage(`Recommend refactoring changes for this block:\n\`\`\`python\n${selectedCode}\n\`\`\``);
+              }}
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-bold transition"
+            >
+              Refactor 🛠️
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input container */}
       <div className="p-3 bg-white dark:bg-gray-850 border-t border-gray-200 dark:border-gray-750 flex items-center space-x-2">
         <input
@@ -166,7 +305,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
-          placeholder="Ask a question about the code or findings..."
+          placeholder={selectedCode ? "Ask about selected code..." : "Ask a question about the code or findings..."}
           className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-250 dark:border-gray-700/80 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 dark:text-gray-200 disabled:opacity-60"
         />
         <Button
@@ -183,3 +322,5 @@ export const Chatbot: React.FC<ChatbotProps> = ({ projectId, reviewId }) => {
     </div>
   );
 };
+
+export default Chatbot;

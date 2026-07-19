@@ -34,6 +34,11 @@ export interface ChatRequest {
   review_id?: number;
   message: string;
   history?: ChatMessage[];
+  selected_code?: string;
+  editor_code?: string;
+  filename?: string;
+  selection_start_line?: number;
+  selection_end_line?: number;
 }
 
 export interface ChatResponse {

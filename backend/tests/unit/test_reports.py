@@ -49,12 +49,12 @@ async def seed_report(client: AsyncClient, username="repuser", email="repuser@co
         await session.commit()
         report_id = report.id
 
-    return auth_header, report_id
+    return auth_header, report_id, tokens['access_token']
 
 
 @pytest.mark.anyio
 async def test_reports_routing_endpoints(client: AsyncClient):
-    auth_header, report_id = await seed_report(client)
+    auth_header, report_id, access_token = await seed_report(client)
 
     # 1. List all reports
     res_list = await client.get("/api/v1/reports", headers=auth_header)
@@ -81,3 +81,17 @@ async def test_reports_routing_endpoints(client: AsyncClient):
     # 4. Check Not Found
     res_not_found = await client.get("/api/v1/reports/999", headers=auth_header)
     assert res_not_found.status_code == 404
+
+    # 5. Download stream with token query parameter
+    res_stream = await client.get(f"/api/v1/reports/{report_id}/download/stream?token={access_token}")
+    assert res_stream.status_code == 200
+    assert res_stream.headers["content-type"] == "application/pdf"
+
+    # Clean up generated file if it was created
+    import os
+    if os.path.exists("reports/exports/test-report.pdf"):
+        os.remove("reports/exports/test-report.pdf")
+
+    # 6. Download stream with invalid token
+    res_stream_bad = await client.get(f"/api/v1/reports/{report_id}/download/stream?token=invalid_token")
+    assert res_stream_bad.status_code == 401

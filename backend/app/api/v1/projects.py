@@ -4,7 +4,15 @@ from typing import List
 from app.core.dependencies import get_db, get_current_user
 from app.core.responses import StandardJSONResponse
 from app.models.user import User
-from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectStatsResponse
+from app.schemas.project import (
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectResponse,
+    ProjectStatsResponse,
+    UploadedSourceResponse,
+    SourceCodeContentResponse,
+    SourceRunResponse,
+)
 from app.schemas.query import QueryParams, get_query_params, PaginatedResponse
 from app.services.project_service import ProjectService
 
@@ -159,7 +167,7 @@ async def upload_project_file(
 
     # Calculate filename and save destination
     safe_filename = f"{project_id}_{file.filename}"
-    file_path = os.path.join(upload_dir, safe_filename)
+    file_path = os.path.join(upload_dir, safe_filename).replace("\\", "/")
 
     # Read content to write to file and compute hash
     content = await file.read()
@@ -172,7 +180,20 @@ async def upload_project_file(
 
     # Determine programming language from extension
     ext = os.path.splitext(file.filename)[1].lower()
-    language = "python" if ext == ".py" else ext.strip(".") or "txt"
+    if ext in [".py", ".pyw"]:
+        language = "python"
+    elif ext in [".js", ".jsx"]:
+        language = "javascript"
+    elif ext in [".ts", ".tsx"]:
+        language = "typescript"
+    elif ext == ".cs":
+        language = "csharp"
+    elif ext in [".cpp", ".hpp", ".h"]:
+        language = "cpp"
+    elif ext == ".sqlproj":
+        language = "xml"
+    else:
+        language = ext.strip(".") or "txt"
 
     # Create UploadedSource record in database
     uploaded_source = UploadedSource(
@@ -196,3 +217,234 @@ async def upload_project_file(
         "language": uploaded_source.language,
         "status": uploaded_source.status
     }
+
+
+@router.get("/{project_id}/sources", response_class=StandardJSONResponse, response_model=List[UploadedSourceResponse])
+async def list_project_sources(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lists all uploaded source files associated with this project workspace."""
+    if not current_user.is_superuser:
+        await ProjectService.get_project(db, project_id, current_user.id)
+    else:
+        from app.db.repositories.project_repository import ProjectRepository
+        project_repo = ProjectRepository(db)
+        project = await project_repo.get(project_id)
+        if not project:
+            from app.core.exceptions import NotFoundException
+            raise NotFoundException(f"Project with ID {project_id} not found.")
+
+    from app.models.project import UploadedSource
+    from sqlalchemy.future import select
+
+    stmt = select(UploadedSource).filter(UploadedSource.project_id == project_id)
+    res = await db.execute(stmt)
+    sources = res.scalars().all()
+    return list(sources)
+
+
+@router.get("/{project_id}/sources/{source_id}", response_class=StandardJSONResponse, response_model=SourceCodeContentResponse)
+async def get_project_source(
+    project_id: int,
+    source_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieves plain text code content and properties for a specific source file version."""
+    if not current_user.is_superuser:
+        await ProjectService.get_project(db, project_id, current_user.id)
+
+    from app.models.project import UploadedSource
+    from app.core.exceptions import NotFoundException
+    from sqlalchemy.future import select
+    import os
+
+    stmt = select(UploadedSource).filter(
+        UploadedSource.id == source_id, UploadedSource.project_id == project_id
+    )
+    res = await db.execute(stmt)
+    source = res.scalars().first()
+    if not source:
+        raise NotFoundException(f"Source file with ID {source_id} not found in this project.")
+
+    content = ""
+    if os.path.exists(source.file_path):
+        try:
+            with open(source.file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            from app.core.exceptions import ValidationException
+            raise ValidationException(f"Failed to read source file: {str(e)}")
+    else:
+        raise NotFoundException(f"Source file not found on disk at {source.file_path}")
+
+    return {
+        "id": source.id,
+        "project_id": source.project_id,
+        "filename": source.filename,
+        "language": source.language,
+        "content": content
+    }
+
+
+from pydantic import BaseModel
+
+class SourceCodeSaveRequest(BaseModel):
+    content: str
+
+
+@router.put("/{project_id}/sources/{source_id}", response_class=StandardJSONResponse, response_model=SourceCodeContentResponse)
+async def save_project_source(
+    project_id: int,
+    source_id: int,
+    payload: SourceCodeSaveRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Saves updated plain text code content back to the source file on disk."""
+    if not current_user.is_superuser:
+        await ProjectService.get_project(db, project_id, current_user.id)
+
+    from app.models.project import UploadedSource
+    from app.core.exceptions import NotFoundException
+    from sqlalchemy.future import select
+    import os
+    import hashlib
+
+    stmt = select(UploadedSource).filter(
+        UploadedSource.id == source_id, UploadedSource.project_id == project_id
+    )
+    res = await db.execute(stmt)
+    source = res.scalars().first()
+    if not source:
+        raise NotFoundException(f"Source file with ID {source_id} not found in this project.")
+
+    try:
+        content_bytes = payload.content.encode("utf-8")
+        with open(source.file_path, "wb") as f:
+            f.write(content_bytes)
+
+        source.file_size = len(content_bytes)
+        source.sha256_hash = hashlib.sha256(content_bytes).hexdigest()
+        db.add(source)
+        await db.commit()
+        await db.refresh(source)
+    except Exception as e:
+        from app.core.exceptions import ValidationException
+        raise ValidationException(f"Failed to save source file changes: {str(e)}")
+
+    return {
+        "id": source.id,
+        "project_id": source.project_id,
+        "filename": source.filename,
+        "language": source.language,
+        "content": payload.content
+    }
+
+
+@router.post("/{project_id}/sources/{source_id}/run", response_class=StandardJSONResponse, response_model=SourceRunResponse)
+async def run_project_source(
+    project_id: int,
+    source_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Runs Python source file in a subprocess using the active python interpreter context."""
+    if not current_user.is_superuser:
+        await ProjectService.get_project(db, project_id, current_user.id)
+
+    from app.models.project import UploadedSource
+    from app.core.exceptions import NotFoundException, ValidationException
+    from sqlalchemy.future import select
+    import os
+    import sys
+    import asyncio
+
+    stmt = select(UploadedSource).filter(
+        UploadedSource.id == source_id, UploadedSource.project_id == project_id
+    )
+    res = await db.execute(stmt)
+    source = res.scalars().first()
+    if not source:
+        raise NotFoundException(f"Source file with ID {source_id} not found in this project.")
+
+    if source.language != "python":
+        raise ValidationException("Execution is only supported for Python source files.")
+
+    if not os.path.exists(source.file_path):
+        raise NotFoundException(f"Source file not found on disk at {source.file_path}")
+
+    python_executable = sys.executable
+    try:
+        process = await asyncio.create_subprocess_exec(
+            python_executable,
+            source.file_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                process.communicate(), timeout=10.0
+            )
+            stdout = stdout_bytes.decode("utf-8", errors="replace")
+            stderr = stderr_bytes.decode("utf-8", errors="replace")
+            exit_code = process.returncode
+        except asyncio.TimeoutError:
+            try:
+                process.kill()
+            except Exception:
+                pass
+            stdout = ""
+            stderr = "Execution timed out after 10.0 seconds."
+            exit_code = -1
+    except Exception as e:
+        stdout = ""
+        stderr = f"Failed to launch process: {str(e)}"
+        exit_code = -1
+
+    return {
+        "stdout": stdout,
+        "stderr": stderr,
+        "exit_code": exit_code
+    }
+
+
+@router.delete("/{project_id}/sources/{source_id}", response_class=StandardJSONResponse)
+async def delete_project_source(
+    project_id: int,
+    source_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Deletes a specific source file version from disk and database."""
+    if not current_user.is_superuser:
+        await ProjectService.get_project(db, project_id, current_user.id)
+
+    from app.models.project import UploadedSource
+    from app.core.exceptions import NotFoundException
+    from sqlalchemy.future import select
+    import os
+
+    stmt = select(UploadedSource).filter(
+        UploadedSource.id == source_id, UploadedSource.project_id == project_id
+    )
+    res = await db.execute(stmt)
+    source = res.scalars().first()
+    if not source:
+        raise NotFoundException(f"Source file with ID {source_id} not found in this project.")
+
+    # Remove from filesystem if it exists
+    if os.path.exists(source.file_path):
+        try:
+            os.remove(source.file_path)
+        except Exception:
+            pass
+
+    await db.delete(source)
+    await db.commit()
+
+    return {"message": "Source file successfully deleted."}
+
+

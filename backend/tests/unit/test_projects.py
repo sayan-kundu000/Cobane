@@ -142,3 +142,81 @@ async def test_project_stats_and_language_filter(client: AsyncClient):
     res_no_lang = await client.get("/api/v1/projects?language=rust", headers=auth_header)
     assert res_no_lang.status_code == 200
     assert len(res_no_lang.json()["data"]["items"]) == 0
+
+
+@pytest.mark.anyio
+async def test_project_source_lifecycle_and_run(client: AsyncClient):
+    auth_header = await get_auth_header(client, "sourceuser", "sourceuser@cobane.ai")
+
+    # 1. Create project
+    res_create = await client.post("/api/v1/projects", json={"name": "source-proj"}, headers=auth_header)
+    project_id = res_create.json()["data"]["id"]
+
+    # 2. Seed an uploaded source directly to DB
+    async with TestingSessionLocal() as session:
+        uploaded_source = UploadedSource(
+            project_id=project_id,
+            filename="calc_test.py",
+            file_path="uploads/processed/calc_test.py",
+            file_size=31,
+            language="python",
+            sha256_hash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            status="processed",
+        )
+        session.add(uploaded_source)
+        await session.commit()
+        await session.refresh(uploaded_source)
+        source_id = uploaded_source.id
+
+    # Create dummy file on disk for reading/running
+    import os
+    os.makedirs("uploads/processed", exist_ok=True)
+    with open("uploads/processed/calc_test.py", "w", encoding="utf-8") as f:
+        f.write("print('hello from calc test')")
+
+    try:
+        # 3. List sources
+        res_sources = await client.get(f"/api/v1/projects/{project_id}/sources", headers=auth_header)
+        assert res_sources.status_code == 200
+        sources_data = res_sources.json()["data"]
+        assert len(sources_data) == 1
+        assert sources_data[0]["filename"] == "calc_test.py"
+
+        # 4. Get source content
+        res_content = await client.get(f"/api/v1/projects/{project_id}/sources/{source_id}", headers=auth_header)
+        assert res_content.status_code == 200
+        content_data = res_content.json()["data"]
+        assert content_data["content"] == "print('hello from calc test')"
+
+        # 5. Update source content
+        res_update = await client.put(
+            f"/api/v1/projects/{project_id}/sources/{source_id}",
+            json={"content": "print('hello updated')"},
+            headers=auth_header
+        )
+        assert res_update.status_code == 200
+        update_data = res_update.json()["data"]
+        assert update_data["content"] == "print('hello updated')"
+
+        # 6. Run source code
+        res_run = await client.post(f"/api/v1/projects/{project_id}/sources/{source_id}/run", headers=auth_header)
+        assert res_run.status_code == 200
+        run_data = res_run.json()["data"]
+        assert "hello updated" in run_data["stdout"]
+        assert run_data["exit_code"] == 0
+
+        # 7. Delete source code
+        res_delete = await client.delete(f"/api/v1/projects/{project_id}/sources/{source_id}", headers=auth_header)
+        assert res_delete.status_code == 200
+
+        # Verify deletion: GET content should now return 404
+        res_get_deleted = await client.get(f"/api/v1/projects/{project_id}/sources/{source_id}", headers=auth_header)
+        assert res_get_deleted.status_code == 404
+    finally:
+        # Clean up file
+        try:
+            os.remove("uploads/processed/calc_test.py")
+        except Exception:
+            pass
+
+

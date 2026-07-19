@@ -240,29 +240,7 @@ async def get_review_code(
             from app.core.exceptions import ValidationException
             raise ValidationException(f"Failed to read source file content: {str(e)}")
     else:
-        if source.filename == "utils.py" or "demo" in source.file_path:
-            content = (
-                "import os\n"
-                "import sys\n\n"
-                "# Line 10: Missing docstring at module level\n"
-                "def connect(connection_string):\n"
-                "    # Line 12: Unused argument 'connection_string'\n"
-                "    print(\"Initiating connection...\")\n"
-                "    return None\n\n"
-                "def process_data(value):\n"
-                "    # Line 18: Use of assert statement detected\n"
-                "    assert value is not None\n"
-                "    \n"
-                "    # Line 24: Possible hardcoded password string detection\n"
-                "    # Line 24: Avoid calling multiple global connection pools\n"
-                "    password = 'secretPassword123'\n"
-                "    for x in range(10):\n"
-                "        # pool.connect() mock\n"
-                "        print(\"Connected iteration\", x)\n"
-                "    return True\n"
-            )
-        else:
-            raise NotFoundException(f"Source file not found on disk at {source.file_path}")
+        raise NotFoundException(f"Source file not found on disk at {source.file_path}")
 
     return {
         "id": source.id,

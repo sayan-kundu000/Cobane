@@ -39,7 +39,7 @@ async def test_source_code_validation():
         orchestrator.validate_source(os.path.abspath("non_existent_file.py"))
 
     # 2. Unsupported extension
-    invalid_ext_path = os.path.abspath("tests/unit/invalid.txt")
+    invalid_ext_path = os.path.abspath("tests/unit/invalid.rust")
     with open(invalid_ext_path, "w") as f:
         f.write("hello")
     try:
@@ -154,3 +154,46 @@ async def test_legacy_service_wrapper(temp_stub_file):
     assert "issues" in results["bandit"]
     assert "cc" in results["radon"]
     assert results["radon"]["cc"]["loc"] > 0
+
+
+@pytest.mark.anyio
+async def test_non_python_file_analysis():
+    path = os.path.abspath("tests/unit/stub_test_file.cpp")
+    code = (
+        "#include <iostream>\n"
+        "int main() {\n"
+        "    std::cout << \"Hello, World!\" << std::endl;\n"
+        "    return 0;\n"
+        "}\n"
+    )
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(code)
+
+    try:
+        orchestrator = StaticAnalysisOrchestrator()
+
+        # Test sync
+        report_sync = orchestrator.run_analysis_sync(path)
+        assert isinstance(report_sync, StaticAnalysisReport)
+        assert len(report_sync.findings) == 0
+        assert report_sync.metrics.loc == 0
+        assert report_sync.metrics.maintainability_index == 100.0
+        assert report_sync.pylint_score == 10.0
+        assert report_sync.bandit_issues_count == 0
+
+        # Test async
+        report_async = await orchestrator.run_analysis_async(path)
+        assert report_async.pylint_score == 10.0
+        assert report_async.metrics.loc == 0
+
+        # Test legacy wrapper
+        service = StaticAnalysisService()
+        results = service.run_all(path)
+        assert results["pylint"]["score"] == 10.0
+        assert len(results["pylint"]["warnings"]) == 0
+        assert results["bandit"]["score"] == "PASS"
+        assert results["radon"]["score"] == "A"
+        assert results["radon"]["cc"]["loc"] == 0
+    finally:
+        if os.path.exists(path):
+            os.remove(path)

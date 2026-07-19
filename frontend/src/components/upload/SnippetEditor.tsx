@@ -5,6 +5,44 @@ import { Button } from '../common/Button.tsx';
 import { Input } from '../common/Input.tsx';
 import { uploadProjectFile } from '../../services/projects.ts';
 
+const getLanguageFromFilename = (name: string): string => {
+  const lastDot = name.lastIndexOf('.');
+  const ext = lastDot !== -1 ? name.substring(lastDot).toLowerCase() : '';
+  switch (ext) {
+    case '.js':
+      return 'javascript';
+    case '.ts':
+    case '.tsx':
+      return 'typescript';
+    case '.jsx':
+      return 'javascript';
+    case '.py':
+    case '.pyw':
+      return 'python';
+    case '.json':
+    case '.ipynb':
+      return 'json';
+    case '.html':
+      return 'html';
+    case '.css':
+      return 'css';
+    case '.cpp':
+    case '.hpp':
+      return 'cpp';
+    case '.h':
+      return 'cpp';
+    case '.cs':
+      return 'csharp';
+    case '.sql':
+    case '.ddl':
+      return 'sql';
+    case '.sqlproj':
+      return 'xml';
+    default:
+      return 'plaintext';
+  }
+};
+
 interface SnippetEditorProps {
   projectId: number;
   onUploadSuccess: (source: any) => void;
@@ -72,7 +110,7 @@ export const SnippetEditor: React.FC<SnippetEditorProps> = ({ projectId, onUploa
       <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
         <MonacoWrapper
           code={code}
-          language={filename.endsWith('.js') ? 'javascript' : filename.endsWith('.ts') ? 'typescript' : 'python'}
+          language={getLanguageFromFilename(filename)}
           onChange={(val) => setCode(val || '')}
         />
       </div>

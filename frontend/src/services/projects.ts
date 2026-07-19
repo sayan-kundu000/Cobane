@@ -52,3 +52,57 @@ export const uploadProjectFile = async (
   });
   return response.data;
 };
+
+export const listProjectSources = async (projectId: number): Promise<ApiResponse<UploadedSource[]>> => {
+  const response = await api.get(`/projects/${projectId}/sources`);
+  return response.data;
+};
+
+export interface ProjectSourceContent {
+  id: number;
+  project_id: number;
+  filename: string;
+  language: string;
+  content: string;
+}
+
+export const getProjectSourceContent = async (
+  projectId: number,
+  sourceId: number
+): Promise<ApiResponse<ProjectSourceContent>> => {
+  const response = await api.get(`/projects/${projectId}/sources/${sourceId}`);
+  return response.data;
+};
+
+export const updateProjectSourceContent = async (
+  projectId: number,
+  sourceId: number,
+  content: string
+): Promise<ApiResponse<ProjectSourceContent>> => {
+  const response = await api.put(`/projects/${projectId}/sources/${sourceId}`, { content });
+  return response.data;
+};
+
+export interface ProjectSourceRunResponse {
+  stdout: string;
+  stderr: string;
+  exit_code: number;
+}
+
+export const runProjectSource = async (
+  projectId: number,
+  sourceId: number
+): Promise<ApiResponse<ProjectSourceRunResponse>> => {
+  const response = await api.post(`/projects/${projectId}/sources/${sourceId}/run`);
+  return response.data;
+};
+
+export const deleteProjectSource = async (
+  projectId: number,
+  sourceId: number
+): Promise<ApiResponse<{ message: string }>> => {
+  const response = await api.delete(`/projects/${projectId}/sources/${sourceId}`);
+  return response.data;
+};
+
+

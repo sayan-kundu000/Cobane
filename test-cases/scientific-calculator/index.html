@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumCalc - Scientific Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glows">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <div class="calculator-container">
+        <header class="calc-header">
+            <div class="brand">
+                <span class="icon">⚛</span>
+                <h1>QuantumCalc</h1>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span id="connection-status">Connecting Backend...</span>
+            </div>
+        </header>
+
+        <main class="calculator">
+            <div class="display-wrapper">
+                <div class="history-display" id="history"></div>
+                <div class="main-display" id="display">0</div>
+            </div>
+
+            <div class="keyboard">
+                <!-- Row 1: Advanced Ops -->
+                <button class="btn btn-sci" onclick="handleSciOp('sin')">sin</button>
+                <button class="btn btn-sci" onclick="handleSciOp('cos')">cos</button>
+                <button class="btn btn-sci" onclick="handleSciOp('tan')">tan</button>
+                <button class="btn btn-sci" onclick="handleSciOp('fact')">n!</button>
+                <button class="btn btn-action" onclick="clearDisplay()">AC</button>
+
+                <!-- Row 2: Advanced Ops -->
+                <button class="btn btn-sci" onclick="handleSciOp('log')">log</button>
+                <button class="btn btn-sci" onclick="handleSciOp('ln')">ln</button>
+                <button class="btn btn-sci" onclick="handleSciOp('exp')">eˣ</button>
+                <button class="btn btn-sci" onclick="handleSciOp('sqrt')">√</button>
+                <button class="btn btn-action" onclick="deleteChar()">DEL</button>
+
+                <!-- Row 3: Math constants / basic layout -->
+                <button class="btn btn-sci" onclick="appendValue('π')">π</button>
+                <button class="btn btn-sci" onclick="appendValue('e')">e</button>
+                <button class="btn btn-sci" onclick="appendValue('(')">(</button>
+                <button class="btn btn-sci" onclick="appendValue(')')">)</button>
+                <button class="btn btn-operator" onclick="appendOperator('/')">÷</button>
+
+                <!-- Row 4: Num pad -->
+                <button class="btn btn-num" onclick="appendValue('7')">7</button>
+                <button class="btn btn-num" onclick="appendValue('8')">8</button>
+                <button class="btn btn-num" onclick="appendValue('9')">9</button>
+                <button class="btn btn-operator" onclick="appendOperator('*')">×</button>
+
+                <!-- Row 5: Num pad -->
+                <button class="btn btn-num" onclick="appendValue('4')">4</button>
+                <button class="btn btn-num" onclick="appendValue('5')">5</button>
+                <button class="btn btn-num" onclick="appendValue('6')">6</button>
+                <button class="btn btn-operator" onclick="appendOperator('-')">-</button>
+
+                <!-- Row 6: Num pad -->
+                <button class="btn btn-num" onclick="appendValue('1')">1</button>
+                <button class="btn btn-num" onclick="appendValue('2')">2</button>
+                <button class="btn btn-num" onclick="appendValue('3')">3</button>
+                <button class="btn btn-operator" onclick="appendOperator('+')">+</button>
+
+                <!-- Row 7: Bottom -->
+                <button class="btn btn-num double" onclick="appendValue('0')">0</button>
+                <button class="btn btn-num" onclick="appendValue('.')">.</button>
+                <button class="btn btn-equals" onclick="evaluateExpression()">=</button>
+            </div>
+        </main>
+        
+        <footer class="calc-footer">
+            <p>Powered by Python Standard Library & FastAPI Proxy</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -29,7 +29,9 @@ class StaticAnalysisOrchestrator:
 
         _, ext = os.path.splitext(file_path)
         if ext.lower() not in static_config.supported_extensions:
-            raise ValidationException(f"Unsupported file extension '{ext}'. Only Python (.py) files are supported.")
+            raise ValidationException(
+                f"Unsupported file extension '{ext}'. Supported extensions: {', '.join(sorted(static_config.supported_extensions))}"
+            )
 
         try:
             size_kb = os.path.getsize(file_path) / 1024.0
@@ -47,6 +49,25 @@ class StaticAnalysisOrchestrator:
     def run_analysis_sync(self, file_path: str) -> StaticAnalysisReport:
         """Synchronously executes enabled static analysis checkers and returns the aggregated report."""
         self.validate_source(file_path)
+
+        _, ext = os.path.splitext(file_path)
+        is_python = ext.lower() in {".py", ".pyw"}
+
+        if not is_python:
+            return StaticAnalysisReport(
+                findings=[],
+                metrics=NormalizedMetrics(
+                    cyclomatic_complexity=0,
+                    maintainability_index=100.0,
+                    loc=0,
+                    functions_count=0,
+                    classes_count=0,
+                ),
+                pylint_score=10.0,
+                radon_mi_score=100.0,
+                bandit_issues_count=0,
+            )
+
         analysis_logger.info("Starting synchronous static analysis pipeline for: %s", file_path)
         start_time = time.perf_counter()
 
@@ -88,6 +109,25 @@ class StaticAnalysisOrchestrator:
     async def run_analysis_async(self, file_path: str) -> StaticAnalysisReport:
         """Asynchronously executes static checkers concurrently in the background, returning aggregated reports."""
         self.validate_source(file_path)
+
+        _, ext = os.path.splitext(file_path)
+        is_python = ext.lower() in {".py", ".pyw"}
+
+        if not is_python:
+            return StaticAnalysisReport(
+                findings=[],
+                metrics=NormalizedMetrics(
+                    cyclomatic_complexity=0,
+                    maintainability_index=100.0,
+                    loc=0,
+                    functions_count=0,
+                    classes_count=0,
+                ),
+                pylint_score=10.0,
+                radon_mi_score=100.0,
+                bandit_issues_count=0,
+            )
+
         analysis_logger.info("Starting asynchronous concurrent static analysis pipeline for: %s", file_path)
         start_time = time.perf_counter()
 

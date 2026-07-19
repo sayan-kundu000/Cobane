@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumHangman - Decryption Word game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glows">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <div class="hangman-container">
+        <header class="hangman-header">
+            <div class="brand">
+                <span class="icon">☠</span>
+                <h1>QuantumHangman</h1>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span id="connection-status">Connecting Backend...</span>
+            </div>
+        </header>
+
+        <main class="hangman-layout">
+            <!-- Left Panel: Graphic and info -->
+            <section class="visual-panel">
+                <div class="gallows-wrapper">
+                    <pre id="gallows">
+  +---+
+  |   |
+      |
+      |
+      |
+      |
+=========
+                    </pre>
+                </div>
+                <div class="stats-panel">
+                    <div class="stat-box">
+                        <span class="label">Attempts Left</span>
+                        <span id="tries-left" class="value">6</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">Incorrect Guesses</span>
+                        <span id="wrong-letters" class="value-wrong">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Play area -->
+            <section class="play-panel">
+                <!-- Clue panel -->
+                <div class="clue-card">
+                    <h2>Matrix Decryption Clue</h2>
+                    <p id="clue-text">Click Start New Decryption Session to load a word clue.</p>
+                </div>
+
+                <!-- Word Display -->
+                <div class="word-display-wrapper">
+                    <div id="word-display" class="word-display">
+                        <!-- Letters injected here -->
+                        _ _ _ _ _ _
+                    </div>
+                </div>
+
+                <!-- Onscreen Keyboard -->
+                <div class="keyboard-panel">
+                    <div class="keyboard" id="keyboard">
+                        <!-- JavaScript injects letter buttons -->
+                    </div>
+                </div>
+
+                <!-- Reset control -->
+                <button class="btn btn-action primary start-btn" id="start-btn" onclick="startNewSession()">Start New Decryption</button>
+            </section>
+        </main>
+        
+        <footer class="hangman-footer">
+            <p>Powered by 111-Word Database & Python SimpleHTTPProxy</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
