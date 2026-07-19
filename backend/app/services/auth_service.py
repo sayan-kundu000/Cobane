@@ -43,7 +43,7 @@ class AuthService:
         )
         db.add(user)
         await db.commit()
-        
+
         # Load user eagerly with relationships to prevent validation errors in schemas
         registered_user = await user_repo.get(user.id)
 

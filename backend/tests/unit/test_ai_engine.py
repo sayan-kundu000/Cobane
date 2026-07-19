@@ -183,8 +183,8 @@ async def test_ai_service_integration():
     try:
         results = await ai_service.generate_review(_code_content="myVal = 5", filename="helpers.py", language="python")
 
-        assert results["provider"] == "openai"
-        assert os.getenv("AI_PROVIDER", settings.AI_PROVIDER) == "openai" or results["provider"] is not None
+        assert results["provider"] == settings.AI_PROVIDER
+        assert results["provider"] is not None
         assert results["summary"] == "AI Service review completed."
         assert len(results["suggestions"]) == 1
         assert results["suggestions"][0]["type"] == "naming"
